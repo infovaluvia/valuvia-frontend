@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import Container from "@/components/ui/Container";
 
@@ -36,9 +37,7 @@ export default function Footer() {
         <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] bg-primary text-xs font-bold text-white">
-                V
-              </span>
+              <Image src="/logo.png" alt="Valuvia" width={24} height={24} />
               <span className="text-sm font-bold text-foreground">Valuvia</span>
             </div>
             <p className="mt-3 max-w-[220px] text-sm text-foreground-muted">

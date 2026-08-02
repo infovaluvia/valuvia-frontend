@@ -15,6 +15,9 @@
   --accent-green: #0e7c5a;
   --accent-green-tint: #e7f5ef;
 
+  --accent-gold: #b8860b;
+  --accent-gold-tint: #faf3e2;
+
   --success: #0e7c5a;
   --success-tint: #e7f5ef;
   --warning: #b6740a;
@@ -43,6 +46,8 @@
 
   --color-accent-green: var(--accent-green);
   --color-accent-green-tint: var(--accent-green-tint);
+  --color-accent-gold: var(--accent-gold);
+  --color-accent-gold-tint: var(--accent-gold-tint);
 
   --color-success: var(--success);
   --color-success-tint: var(--success-tint);

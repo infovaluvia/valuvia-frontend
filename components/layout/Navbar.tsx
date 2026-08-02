@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import Container from "@/components/ui/Container";
 import Button from "@/components/ui/Button";
@@ -12,12 +13,15 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
       <Container className="flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] bg-primary text-sm font-bold text-white">
-            V
-          </span>
-          <span className="text-[1.05rem] font-bold tracking-tight text-foreground">
-            Valuvia
+        <Link href="/" className="flex items-center gap-2.5">
+          <Image src="/logo.png" alt="Valuvia" width={34} height={34} priority />
+          <span className="flex flex-col leading-none">
+            <span className="text-[1.15rem] font-bold tracking-tight text-foreground">
+              Valuvia
+            </span>
+            <span className="mt-0.5 text-[0.6rem] font-semibold tracking-wide text-foreground-muted">
+              AI-POWERED PROPERTY TAX APPEALS
+            </span>
           </span>
         </Link>
 
