@@ -130,7 +130,7 @@ export default function CheckoutSection({
           Checkout was cancelled — no charge was made.
         </p>
         <Button onClick={handlePay} className="mt-4 w-full">
-          Try again — $129
+          Try again — Get My Appeal Package ($79)
         </Button>
       </Card>
     )
@@ -140,7 +140,7 @@ export default function CheckoutSection({
     return (
       <div className="mt-8">
         <Button onClick={handlePay} size="lg" className="w-full">
-          Continue — $129
+          Get My Appeal Package — $79
         </Button>
       </div>
     )

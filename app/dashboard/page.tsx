@@ -93,6 +93,12 @@ export default async function DashboardPage() {
               <Button href="/appeal/new" size="md">
                 Start New Appeal
               </Button>
+              <Link
+                href="/account"
+                className="h-11 rounded-[var(--radius-sm)] border border-border px-5 text-sm font-semibold leading-[2.75rem] text-foreground-muted transition-colors hover:border-foreground/30 hover:text-foreground"
+              >
+                Account Settings
+              </Link>
               <SignOutButton />
             </div>
           </div>
