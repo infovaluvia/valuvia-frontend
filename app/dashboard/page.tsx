@@ -2,6 +2,19 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
+async function checkBackendHealth() {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/health`, {
+      cache: 'no-store',
+    })
+    if (!res.ok) return false
+    const data = await res.json()
+    return data.status === 'ok'
+  } catch {
+    return false
+  }
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient()
   const {
@@ -14,6 +27,8 @@ export default async function DashboardPage() {
   if (!user) {
     redirect('/login')
   }
+
+  const backendHealthy = await checkBackendHealth()
 
   return (
     <main style={{ padding: 40 }}>
@@ -29,6 +44,17 @@ export default async function DashboardPage() {
       ) : (
         <h1>Welcome, {user.email}</h1>
       )}
+
+      {/* Temporary connectivity check — remove once real API calls are wired up */}
+      <p style={{ marginTop: 16 }}>
+        Backend connection:{' '}
+        {backendHealthy ? (
+          <span style={{ color: 'green' }}>connected</span>
+        ) : (
+          <span style={{ color: 'red' }}>not reachable</span>
+        )}
+      </p>
+
       <SignOutButton />
     </main>
   )
