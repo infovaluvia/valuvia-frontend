@@ -1,26 +1,78 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fdfcfa;
+  --surface: #ffffff;
+  --surface-alt: #f5f3ee;
+  --foreground: #0f1b33;
+  --foreground-muted: #4b5670;
+  --border: #e4e1d8;
+
+  --primary: #1f4fd6;
+  --primary-hover: #1a3fb0;
+  --primary-tint: #eaf0fe;
+
+  --accent-green: #0e7c5a;
+  --accent-green-tint: #e7f5ef;
+
+  --success: #0e7c5a;
+  --success-tint: #e7f5ef;
+  --warning: #b6740a;
+  --warning-tint: #fdf3e0;
+  --error: #c22a2a;
+  --error-tint: #fbeaea;
+  --info: #1f4fd6;
+  --info-tint: #eaf0fe;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
   --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-border: var(--border);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-tint: var(--primary-tint);
+
+  --color-accent-green: var(--accent-green);
+  --color-accent-green-tint: var(--accent-green-tint);
+
+  --color-success: var(--success);
+  --color-success-tint: var(--success-tint);
+  --color-warning: var(--warning);
+  --color-warning-tint: var(--warning-tint);
+  --color-error: var(--error);
+  --color-error-tint: var(--error-tint);
+  --color-info: var(--info);
+  --color-info-tint: var(--info-tint);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-feature-settings: "cv11", "ss01";
+}
+
+h1, h2, h3, h4 {
+  letter-spacing: -0.02em;
+  font-weight: 650;
+}
+
+::selection {
+  background: var(--primary-tint);
+  color: var(--primary);
 }

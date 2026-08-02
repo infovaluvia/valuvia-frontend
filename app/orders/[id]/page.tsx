@@ -1,3 +1,6 @@
+import Navbar from '@/components/layout/Navbar'
+import Footer from '@/components/layout/Footer'
+import Card from '@/components/ui/Card'
 import { apiFetchServer } from '@/lib/api-server'
 import CheckoutSection from '@/components/orders/CheckoutSection'
 
@@ -34,84 +37,107 @@ interface OrderData {
 
 export default async function OrderPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ checkout?: string }>
 }) {
   const { id } = await params
+  const { checkout } = await searchParams
   const data = (await apiFetchServer(`/api/v1/orders/${id}`)) as OrderData
   const { order, comps } = data
 
   return (
-    <main style={{ padding: 40, maxWidth: 700, margin: '0 auto' }}>
-      <h1>Your Estimate</h1>
+    <>
+      <Navbar />
+      <main className="flex-1 bg-surface-alt py-12 md:py-16">
+        <div className="mx-auto max-w-[720px] px-6">
+          <p className="text-center text-xs font-semibold uppercase tracking-wide text-primary">
+            Step 2 of 2 — Your estimate
+          </p>
+          <h1 className="mt-2 text-center text-2xl font-bold text-foreground md:text-3xl">
+            Your Estimate
+          </h1>
 
-      {/* comps.source is "demo" until a real data source is wired up —
-          keep this notice visible until that happens. */}
-      {comps.source === 'demo' && (
-        <p style={{ background: '#fff8e1', padding: 12, borderRadius: 4, fontSize: 14 }}>
-          These figures are an estimate based on sample data and are for reference only.
-          Final values may differ.
-        </p>
-      )}
+          {comps.source === 'demo' && (
+            <p className="mt-6 rounded-[var(--radius-sm)] bg-warning-tint px-4 py-3 text-sm text-warning">
+              These figures are an estimate based on sample data and are for
+              reference only. Final values may differ.
+            </p>
+          )}
 
-      <div style={{ display: 'flex', gap: 24, margin: '24px 0' }}>
-        <Stat label="Assessed value" value={formatDollars(order.assessed_value_cents)} />
-        <Stat label="Estimated market value" value={formatDollars(order.requested_value_cents)} />
-        <Stat
-          label="Estimated savings"
-          value={formatDollars(order.estimated_savings_cents)}
-          highlight
-        />
-      </div>
+          <Card className="mt-6 p-6 md:p-8">
+            <div className="grid grid-cols-3 gap-4">
+              <Stat label="Assessed value" value={formatDollars(order.assessed_value_cents)} />
+              <Stat
+                label="Estimated market value"
+                value={formatDollars(order.requested_value_cents)}
+              />
+              <Stat
+                label="Estimated savings"
+                value={formatDollars(order.estimated_savings_cents)}
+                highlight
+              />
+            </div>
+          </Card>
 
-      <h2>Comparable Properties</h2>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr>
-            <th style={thStyle}>Address</th>
-            <th style={thStyle}>Sale Date</th>
-            <th style={thStyle}>Price</th>
-            <th style={thStyle}>Sqft</th>
-            <th style={thStyle}>$/Sqft</th>
-          </tr>
-        </thead>
-        <tbody>
-          {comps.comps.map((c, i) => (
-            <tr key={i}>
-              <td style={tdStyle}>{c.address}</td>
-              <td style={tdStyle}>{c.sale_date}</td>
-              <td style={tdStyle}>{formatDollars(c.price * 100)}</td>
-              <td style={tdStyle}>{c.sqft}</td>
-              <td style={tdStyle}>${c.price_per_sqft}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+          <h2 className="mt-10 text-lg font-semibold text-foreground">
+            Comparable Properties
+          </h2>
+          <Card className="mt-4 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-surface-alt">
+                  <Th>Address</Th>
+                  <Th>Sale Date</Th>
+                  <Th>Price</Th>
+                  <Th>Sqft</Th>
+                  <Th>$/Sqft</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {comps.comps.map((c, i) => (
+                  <tr key={i} className="border-b border-border last:border-0">
+                    <Td>{c.address}</Td>
+                    <Td>{c.sale_date}</Td>
+                    <Td>{formatDollars(c.price * 100)}</Td>
+                    <Td>{c.sqft}</Td>
+                    <Td>${c.price_per_sqft}</Td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
 
-      <CheckoutSection orderId={order.id} initialStatus={order.status} />
-    </main>
+          <CheckoutSection orderId={order.id} initialStatus={order.status} checkoutResult={checkout} />
+        </div>
+      </main>
+      <Footer />
+    </>
   )
 }
 
 function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
     <div>
-      <div style={{ fontSize: 13, color: '#666' }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 600, color: highlight ? '#2e7d32' : undefined }}>
+      <div className="text-xs text-foreground-muted">{label}</div>
+      <div
+        className={`mt-1 text-xl font-bold ${highlight ? 'text-accent-green' : 'text-foreground'}`}
+      >
         {value}
       </div>
     </div>
   )
 }
 
-const thStyle: React.CSSProperties = {
-  textAlign: 'left',
-  borderBottom: '1px solid #ddd',
-  padding: '8px 4px',
-  fontSize: 13,
+function Th({ children }: { children: React.ReactNode }) {
+  return (
+    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground-muted">
+      {children}
+    </th>
+  )
 }
-const tdStyle: React.CSSProperties = {
-  borderBottom: '1px solid #eee',
-  padding: '8px 4px',
-  fontSize: 14,
+
+function Td({ children }: { children: React.ReactNode }) {
+  return <td className="px-4 py-3 text-foreground">{children}</td>
 }

@@ -3,16 +3,19 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiFetch } from '@/lib/api'
+import Card from '@/components/ui/Card'
+import Input from '@/components/ui/Input'
+import Button from '@/components/ui/Button'
 
 // Combined intake form: creates a property, then creates an order for it.
 // Santa Clara only for the initial launch, so jurisdiction_code is fixed
 // rather than exposed as a field.
 const JURISDICTION_CODE = 'santa-clara'
 
-export default function IntakeForm() {
+export default function IntakeForm({ initialAddress = '' }: { initialAddress?: string }) {
   const router = useRouter()
 
-  const [situsAddress, setSitusAddress] = useState('')
+  const [situsAddress, setSitusAddress] = useState(initialAddress)
   const [apn, setApn] = useState('')
   const [assessedValue, setAssessedValue] = useState('') // dollars, converted to cents on submit
   const [ownerName, setOwnerName] = useState('')
@@ -69,96 +72,96 @@ export default function IntakeForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: 480, margin: '0 auto' }}>
-      <h2>Property Tax Appeal — Santa Clara County</h2>
+    <div className="mx-auto max-w-[560px] px-6">
+      <p className="text-center text-xs font-semibold uppercase tracking-wide text-primary">
+        Step 1 of 2 — Property details
+      </p>
+      <h1 className="mt-2 text-center text-2xl font-bold text-foreground md:text-3xl">
+        Tell us about your property
+      </h1>
+      <p className="mt-2 text-center text-sm text-foreground-muted">
+        Santa Clara County, CA. Takes about 2 minutes.
+      </p>
 
-      <Field label="Property address">
-        <input
-          type="text"
-          value={situsAddress}
-          onChange={(e) => setSitusAddress(e.target.value)}
-          required
-          style={inputStyle}
-        />
-      </Field>
+      <Card className="mt-8 p-6 md:p-8">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <Field label="Property address">
+            <Input
+              type="text"
+              value={situsAddress}
+              onChange={(e) => setSitusAddress(e.target.value)}
+              required
+            />
+          </Field>
 
-      <Field label="APN (optional)">
-        <input
-          type="text"
-          value={apn}
-          onChange={(e) => setApn(e.target.value)}
-          style={inputStyle}
-        />
-      </Field>
+          <Field label="APN (optional)">
+            <Input type="text" value={apn} onChange={(e) => setApn(e.target.value)} />
+          </Field>
 
-      <Field label="Assessed value ($)">
-        <input
-          type="number"
-          min="0"
-          step="0.01"
-          value={assessedValue}
-          onChange={(e) => setAssessedValue(e.target.value)}
-          required
-          style={inputStyle}
-        />
-      </Field>
+          <Field label="Assessed value ($)">
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={assessedValue}
+              onChange={(e) => setAssessedValue(e.target.value)}
+              required
+            />
+          </Field>
 
-      <Field label="Owner name">
-        <input
-          type="text"
-          value={ownerName}
-          onChange={(e) => setOwnerName(e.target.value)}
-          required
-          style={inputStyle}
-        />
-      </Field>
+          <Field label="Owner name">
+            <Input
+              type="text"
+              value={ownerName}
+              onChange={(e) => setOwnerName(e.target.value)}
+              required
+            />
+          </Field>
 
-      <Field label="Owner email">
-        <input
-          type="email"
-          value={ownerEmail}
-          onChange={(e) => setOwnerEmail(e.target.value)}
-          required
-          style={inputStyle}
-        />
-      </Field>
+          <Field label="Owner email">
+            <Input
+              type="email"
+              value={ownerEmail}
+              onChange={(e) => setOwnerEmail(e.target.value)}
+              required
+            />
+          </Field>
 
-      <Field label="Owner phone (optional)">
-        <input
-          type="tel"
-          value={ownerPhone}
-          onChange={(e) => setOwnerPhone(e.target.value)}
-          style={inputStyle}
-        />
-      </Field>
+          <Field label="Owner phone (optional)">
+            <Input type="tel" value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} />
+          </Field>
 
-      <Field label="Do you live in this property?">
-        <select
-          value={occupied}
-          onChange={(e) => setOccupied(e.target.value as 'yes' | 'no')}
-          style={inputStyle}
-        >
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        </select>
-      </Field>
+          <Field label="Do you live in this property?">
+            <select
+              value={occupied}
+              onChange={(e) => setOccupied(e.target.value as 'yes' | 'no')}
+              className="h-12 w-full rounded-[var(--radius-sm)] border border-border bg-surface px-4 text-[0.95rem] text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary-tint"
+            >
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </Field>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+          {error && (
+            <p className="rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
+              {error}
+            </p>
+          )}
 
-      <button type="submit" disabled={loading} style={{ width: '100%', padding: 10, marginTop: 8 }}>
-        {loading ? 'Submitting...' : 'Get My Estimate'}
-      </button>
-    </form>
+          <Button type="submit" disabled={loading} className="w-full">
+            {loading ? 'Submitting…' : 'Get My Estimate'}
+          </Button>
+        </form>
+      </Card>
+    </div>
   )
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: 12 }}>
-      <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>{label}</label>
+    <div>
+      <label className="mb-1.5 block text-sm font-medium text-foreground">{label}</label>
       {children}
     </div>
   )
 }
-
-const inputStyle: React.CSSProperties = { width: '100%', padding: 8 }
