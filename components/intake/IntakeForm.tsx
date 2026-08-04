@@ -54,6 +54,12 @@ export default function IntakeForm({
   const [ownerEmail, setOwnerEmail] = useState('')
   const [ownerPhone, setOwnerPhone] = useState('')
   const [occupied, setOccupied] = useState<'yes' | 'no'>('yes')
+  // Determines whether the official form's "Single Family Residential"
+  // property-type box gets checked — left unset here (rather than
+  // defaulting to single_family) so a customer with a condo/multi-family/
+  // commercial property has to actively notice and answer this, instead
+  // of silently getting a form that misstates their property type.
+  const [propertyType, setPropertyType] = useState('')
 
   const [ocrLoading, setOcrLoading] = useState(false)
   const [ocrError, setOcrError] = useState<string | null>(null)
@@ -225,6 +231,7 @@ export default function IntakeForm({
           owner_phone: ownerPhone || undefined,
           occupied,
           filing_status: 'owner',
+          property_type: propertyType || undefined,
         }),
       })
 
@@ -409,6 +416,24 @@ export default function IntakeForm({
               <option value="yes">Yes</option>
               <option value="no">No</option>
             </select>
+          </Field>
+
+          <Field label="Property type (optional)">
+            <select
+              value={propertyType}
+              onChange={(e) => setPropertyType(e.target.value)}
+              className="h-12 w-full rounded-[var(--radius-sm)] border border-border bg-surface px-4 text-[0.95rem] text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary-tint"
+            >
+              <option value="">Select…</option>
+              <option value="single_family">Single family home</option>
+              <option value="condo">Condo / townhome</option>
+              <option value="multi_family">Multi-family (2-4 units)</option>
+              <option value="commercial">Commercial</option>
+              <option value="other">Other</option>
+            </select>
+            <p className="mt-1.5 text-xs text-foreground-muted">
+              Used to fill in the correct property-type box on your official application.
+            </p>
           </Field>
 
           <p className="text-xs text-foreground-muted">

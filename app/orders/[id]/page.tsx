@@ -138,6 +138,7 @@ export default async function OrderPage({
                     initialStatus={order.status}
                     checkoutResult={checkout}
                     missingFields={missing_fields}
+                    recommendedValueCents={comps.market_value_cents}
                   />
                 </>
               )}
@@ -269,7 +270,10 @@ function PackagePreviewCard() {
         </p>
 
         <p className="mt-5 rounded-[var(--radius-sm)] bg-success-tint px-4 py-3 text-sm text-success">
-          <b>Rest assured:</b> if your appeal is not successful, you&apos;ll receive a full refund.
+          <b>Our commitment:</b> if anything in your package is inaccurate or incomplete because of
+          an error on our end, contact support and we&apos;ll fix it or make it right. We can&apos;t
+          guarantee the outcome of your county&apos;s independent review — no one honestly can — but
+          we stand behind the accuracy of what we generate.
         </p>
       </Card>
     </>
