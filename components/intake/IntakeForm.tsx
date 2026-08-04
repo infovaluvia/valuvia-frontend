@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiFetch } from '@/lib/api'
+import { getStoredAttribution } from '@/lib/attribution'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
@@ -49,6 +50,7 @@ export default function IntakeForm({ initialAddress = '' }: { initialAddress?: s
       })
 
       // Step 2: create the order for that property
+      const attribution = getStoredAttribution()
       const { order } = await apiFetch('/api/v1/orders', {
         method: 'POST',
         body: JSON.stringify({
@@ -60,6 +62,10 @@ export default function IntakeForm({ initialAddress = '' }: { initialAddress?: s
           owner_phone: ownerPhone || undefined,
           occupied,
           filing_status: 'owner',
+          attribution_code: attribution.promo,
+          utm_source: attribution.utm_source,
+          utm_medium: attribution.utm_medium,
+          utm_campaign: attribution.utm_campaign,
         }),
       })
 
