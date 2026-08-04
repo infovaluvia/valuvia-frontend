@@ -122,23 +122,42 @@ export default function IntakeForm({
       setAddressConfirmed(true)
       setCounty(lead.county || '')
       setState(lead.state || '')
-      setParsedAddress({
+      const parsed = {
         formattedAddress: lead.situs_address,
         street: '',
         city: '',
         county: lead.county || '',
         state: lead.state || '',
         zip: '',
-      })
-      if (lead.apn) setApn(lead.apn)
-      if (lead.assessed_value_cents != null) {
-        setAssessedValue(sanitizeMoneyString((lead.assessed_value_cents / 100).toFixed(2)))
       }
+      setParsedAddress(parsed)
+      if (lead.apn) setApn(lead.apn)
+      const leadAssessedValue =
+        lead.assessed_value_cents != null ? sanitizeMoneyString((lead.assessed_value_cents / 100).toFixed(2)) : ''
+      if (leadAssessedValue) setAssessedValue(leadAssessedValue)
       if (lead.owner_name) setOwnerName(lead.owner_name)
       if (lead.owner_email) setOwnerEmail(lead.owner_email)
       if (lead.owner_phone) setOwnerPhone(lead.owner_phone)
       setLeadCode(normalized)
       setCodeApplied(true)
+
+      // A mailer/QR recipient's whole ask is "let me buy" — everything
+      // needed to create the order is already on their letter, so skip
+      // the review step and go straight to the order page where the buy
+      // button is the very next thing they see. Only auto-submit if the
+      // letter actually had an assessed value; otherwise fall back to
+      // showing the prefilled-but-editable form like any other visitor.
+      if (leadAssessedValue) {
+        await submitOrder({
+          situsAddress: lead.situs_address,
+          assessedValue: leadAssessedValue,
+          leadCode: normalized,
+          county: lead.county || '',
+          state: lead.state || '',
+          apn: lead.apn || '',
+          parsedAddress: parsed,
+        })
+      }
     } catch {
       setCodeError("We couldn't find that code — double check your letter, or just fill in the form below.")
     } finally {
@@ -190,16 +209,33 @@ export default function IntakeForm({
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  // Overrides let lookupCode submit with freshly-fetched lead data
+  // immediately, without waiting on React state updates to land first.
+  async function submitOrder(overrides?: {
+    situsAddress?: string
+    assessedValue?: string
+    leadCode?: string | null
+    county?: string
+    state?: string
+    apn?: string
+    parsedAddress?: ParsedAddress | null
+  }) {
     setError(null)
 
-    if (!situsAddress.trim()) {
+    const finalSitusAddress = overrides?.situsAddress ?? situsAddress
+    const finalAssessedValue = overrides?.assessedValue ?? assessedValue
+    const finalLeadCode = overrides?.leadCode ?? leadCode
+    const finalCounty = overrides?.county ?? county
+    const finalState = overrides?.state ?? state
+    const finalApn = overrides?.apn ?? apn
+    const finalParsedAddress = overrides?.parsedAddress ?? parsedAddress
+
+    if (!finalSitusAddress.trim()) {
       setError('Please enter your property address.')
       return
     }
-    const assessedDollars = parseFloat(assessedValue)
-    if (!assessedValue.trim() || Number.isNaN(assessedDollars) || assessedDollars <= 0) {
+    const assessedDollars = parseFloat(finalAssessedValue)
+    if (!finalAssessedValue.trim() || Number.isNaN(assessedDollars) || assessedDollars <= 0) {
       setError('Please enter your assessed value — you can find it on your property tax bill or assessment notice.')
       return
     }
@@ -211,11 +247,11 @@ export default function IntakeForm({
       const property = await apiFetch('/api/v1/properties', {
         method: 'POST',
         body: JSON.stringify({
-          situs_address: situsAddress,
-          apn: apn || undefined,
-          county: county || undefined,
-          state: state || undefined,
-          parsed_address_json: parsedAddress ?? undefined,
+          situs_address: finalSitusAddress,
+          apn: finalApn || undefined,
+          county: finalCounty || undefined,
+          state: finalState || undefined,
+          parsed_address_json: finalParsedAddress ?? undefined,
         }),
       })
 
@@ -223,8 +259,8 @@ export default function IntakeForm({
         method: 'POST',
         body: JSON.stringify({
           property_id: property.id,
-          apn: apn || undefined,
-          lead_code: leadCode || undefined,
+          apn: finalApn || undefined,
+          lead_code: finalLeadCode || undefined,
           assessed_value_cents: assessedCents,
           owner_name: ownerName || undefined,
           owner_email: ownerEmail || undefined,
@@ -241,6 +277,11 @@ export default function IntakeForm({
     } finally {
       setLoading(false)
     }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    await submitOrder()
   }
 
   return (

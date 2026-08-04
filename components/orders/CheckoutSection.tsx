@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import { apiFetch } from '@/lib/api'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
-import MoneyInput from '@/components/ui/MoneyInput'
 import Button from '@/components/ui/Button'
+import PostPaymentDetailsForm from '@/components/orders/PostPaymentDetailsForm'
 
 interface DocumentItem {
   kind: string
@@ -36,32 +36,22 @@ export default function CheckoutSection({
 
   const [status, setStatus] = useState(initialStatus)
   const [documents, setDocuments] = useState<DocumentItem[] | null>(null)
+  const [showPostPaymentForm, setShowPostPaymentForm] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // owner_name/owner_email/opinion_of_value_cents can still be missing by
-  // the time this renders (assessed value is required back on the intake
-  // page) — the buy button is always visible; clicking it is what reveals
-  // these fields, rather than blocking the button from appearing at all.
+  // Only owner_name/owner_email can still be missing by the time this
+  // renders (assessed value is required back on the intake page) — the
+  // buy button is always visible; clicking it is what reveals these
+  // fields, rather than blocking the button from appearing at all.
+  // Everything else (opinion of value, condition, photos) is collected
+  // AFTER payment, in PostPaymentDetailsForm — it never gates checkout.
   const neededTextFields = missingFields.filter((f) => f in TEXT_FIELD_META)
-  const needsOpinionOfValue = missingFields.includes('opinion_of_value_cents')
   const [showCompletionForm, setShowCompletionForm] = useState(false)
   const [values, setValues] = useState<Record<string, string>>({})
-  const [opinionOfValue, setOpinionOfValue] = useState('')
-
-  // Pre-fill with Valuvia's recommended figure (from comps) the moment
-  // it's available — most customers just accept it, but it's always
-  // editable, and nothing is written to the official form until they
-  // explicitly submit this form.
-  useEffect(() => {
-    if (recommendedValueCents && !opinionOfValue) {
-      setOpinionOfValue((recommendedValueCents / 100).toFixed(2))
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recommendedValueCents])
 
   useEffect(() => {
-    async function loadOrGenerate() {
+    async function loadOrShowPostPayment() {
       if (status === 'documents_generated') {
         setLoading(true)
         try {
@@ -75,22 +65,15 @@ export default function CheckoutSection({
         return
       }
 
-      if (checkoutResult === 'success' && (status === 'paid' || status === 'comps_review')) {
-        setLoading(true)
-        try {
-          const result = await apiFetch(`/api/v1/orders/${orderId}/documents/generate`, {
-            method: 'POST',
-          })
-          setStatus('documents_generated')
-          setDocuments(result.documents)
-        } catch (e) {
-          setError(e instanceof Error ? e.message : 'Document generation failed')
-        } finally {
-          setLoading(false)
-        }
+      // Payment succeeded (or the webhook already flipped status to
+      // "paid") — show the one optional post-payment step instead of
+      // silently generating right away, so the customer gets a chance
+      // to add an opinion of value / condition notes / photos first.
+      if (status === 'paid' || (checkoutResult === 'success' && status === 'comps_review')) {
+        setShowPostPaymentForm(true)
       }
     }
-    loadOrGenerate()
+    loadOrShowPostPayment()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -107,7 +90,7 @@ export default function CheckoutSection({
   }
 
   function handleBuyClick() {
-    if (neededTextFields.length > 0 || needsOpinionOfValue) {
+    if (neededTextFields.length > 0) {
       setShowCompletionForm(true)
       return
     }
@@ -124,19 +107,11 @@ export default function CheckoutSection({
         return
       }
     }
-    const opinionDollars = parseFloat(opinionOfValue)
-    if (needsOpinionOfValue && (!opinionOfValue.trim() || Number.isNaN(opinionDollars) || opinionDollars <= 0)) {
-      setError('Please confirm your opinion of value to continue.')
-      return
-    }
 
     setLoading(true)
     try {
-      const body: Record<string, string | number> = {}
+      const body: Record<string, string> = {}
       for (const field of neededTextFields) body[field] = values[field].trim()
-      if (needsOpinionOfValue) {
-        body.opinion_of_value_cents = Math.round(opinionDollars * 100)
-      }
       await apiFetch(`/api/v1/orders/${orderId}`, { method: 'PATCH', body: JSON.stringify(body) })
       await handlePay()
     } catch (e) {
@@ -156,7 +131,8 @@ export default function CheckoutSection({
       <Card className="mt-8 p-6 md:p-8">
         <h2 className="text-lg font-semibold text-foreground">Your Appeal Package</h2>
         <p className="mt-1 text-sm text-foreground-muted">
-          We&apos;ve also emailed you these links. Download now, or come back to this page any time.
+          We&apos;ve also emailed you these links (with your receipt). Download now, or come back to
+          this page any time.
         </p>
         <ul className="mt-4 space-y-2">
           {documents.map((d) => (
@@ -176,6 +152,19 @@ export default function CheckoutSection({
           Save your account
         </Button>
       </Card>
+    )
+  }
+
+  if (showPostPaymentForm) {
+    return (
+      <PostPaymentDetailsForm
+        orderId={orderId}
+        recommendedValueCents={recommendedValueCents}
+        onGenerated={(docs) => {
+          setStatus('documents_generated')
+          setDocuments(docs)
+        }}
+      />
     )
   }
 
@@ -211,7 +200,7 @@ export default function CheckoutSection({
         <Card className="mt-8 p-6 md:p-8">
           <h2 className="text-lg font-semibold text-foreground">Almost there</h2>
           <p className="mt-1 text-sm text-foreground-muted">
-            We need a few more details so we can put them on your appeal application and send you
+            We need your name and email so we can put them on your appeal application and send you
             your package.
           </p>
           <form onSubmit={handleCompletionSubmit} className="mt-4 space-y-4">
@@ -232,22 +221,6 @@ export default function CheckoutSection({
                 </div>
               )
             })}
-            {needsOpinionOfValue && (
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-foreground">
-                  Your opinion of value
-                  <span className="ml-1 text-error">*</span>
-                </label>
-                <MoneyInput value={opinionOfValue} onChange={setOpinionOfValue} />
-                <p className="mt-1.5 text-xs text-foreground-muted">
-                  This is the figure that goes on your official appeal application as your opinion
-                  of your property&apos;s value.
-                  {recommendedValueCents
-                    ? ` We've pre-filled our data-driven recommendation based on comparable sales — review it and edit it if you disagree.`
-                    : ' Enter the value you believe your property is actually worth.'}
-                </p>
-              </div>
-            )}
             <Button type="submit" size="lg" className="w-full">
               Continue to Payment
             </Button>
