@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/api'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
+import PostPaymentDetailsForm from '@/components/orders/PostPaymentDetailsForm'
 
 interface DocumentItem {
   kind: string
@@ -13,7 +14,7 @@ interface DocumentItem {
   url: string
 }
 
-const NAME_EMAIL_META: Record<string, { label: string; type: string }> = {
+const TEXT_FIELD_META: Record<string, { label: string; type: string }> = {
   owner_name: { label: 'Owner name', type: 'text' },
   owner_email: { label: 'Owner email', type: 'email' },
 }
@@ -23,16 +24,19 @@ export default function CheckoutSection({
   initialStatus,
   checkoutResult,
   missingFields,
+  recommendedValueCents,
 }: {
   orderId: string
   initialStatus: string
   checkoutResult?: string // "success" | "cancelled" | undefined
   missingFields: string[]
+  recommendedValueCents?: number
 }) {
   const router = useRouter()
 
   const [status, setStatus] = useState(initialStatus)
   const [documents, setDocuments] = useState<DocumentItem[] | null>(null)
+  const [showPostPaymentForm, setShowPostPaymentForm] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -40,12 +44,14 @@ export default function CheckoutSection({
   // renders (assessed value is required back on the intake page) — the
   // buy button is always visible; clicking it is what reveals these
   // fields, rather than blocking the button from appearing at all.
-  const neededForCheckout = missingFields.filter((f) => f in NAME_EMAIL_META)
+  // Everything else (opinion of value, condition, photos) is collected
+  // AFTER payment, in PostPaymentDetailsForm — it never gates checkout.
+  const neededTextFields = missingFields.filter((f) => f in TEXT_FIELD_META)
   const [showCompletionForm, setShowCompletionForm] = useState(false)
   const [values, setValues] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    async function loadOrGenerate() {
+    async function loadOrShowPostPayment() {
       if (status === 'documents_generated') {
         setLoading(true)
         try {
@@ -59,22 +65,15 @@ export default function CheckoutSection({
         return
       }
 
-      if (checkoutResult === 'success' && (status === 'paid' || status === 'comps_review')) {
-        setLoading(true)
-        try {
-          const result = await apiFetch(`/api/v1/orders/${orderId}/documents/generate`, {
-            method: 'POST',
-          })
-          setStatus('documents_generated')
-          setDocuments(result.documents)
-        } catch (e) {
-          setError(e instanceof Error ? e.message : 'Document generation failed')
-        } finally {
-          setLoading(false)
-        }
+      // Payment succeeded (or the webhook already flipped status to
+      // "paid") — show the one optional post-payment step instead of
+      // silently generating right away, so the customer gets a chance
+      // to add an opinion of value / condition notes / photos first.
+      if (status === 'paid' || (checkoutResult === 'success' && status === 'comps_review')) {
+        setShowPostPaymentForm(true)
       }
     }
-    loadOrGenerate()
+    loadOrShowPostPayment()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -91,7 +90,7 @@ export default function CheckoutSection({
   }
 
   function handleBuyClick() {
-    if (neededForCheckout.length > 0) {
+    if (neededTextFields.length > 0) {
       setShowCompletionForm(true)
       return
     }
@@ -102,7 +101,7 @@ export default function CheckoutSection({
     e.preventDefault()
     setError(null)
 
-    for (const field of neededForCheckout) {
+    for (const field of neededTextFields) {
       if (!values[field]?.trim()) {
         setError('Please fill in your name and email to continue.')
         return
@@ -112,7 +111,7 @@ export default function CheckoutSection({
     setLoading(true)
     try {
       const body: Record<string, string> = {}
-      for (const field of neededForCheckout) body[field] = values[field].trim()
+      for (const field of neededTextFields) body[field] = values[field].trim()
       await apiFetch(`/api/v1/orders/${orderId}`, { method: 'PATCH', body: JSON.stringify(body) })
       await handlePay()
     } catch (e) {
@@ -132,7 +131,8 @@ export default function CheckoutSection({
       <Card className="mt-8 p-6 md:p-8">
         <h2 className="text-lg font-semibold text-foreground">Your Appeal Package</h2>
         <p className="mt-1 text-sm text-foreground-muted">
-          We&apos;ve also emailed you these links. Download now, or come back to this page any time.
+          We&apos;ve also emailed you these links (with your receipt). Download now, or come back to
+          this page any time.
         </p>
         <ul className="mt-4 space-y-2">
           {documents.map((d) => (
@@ -152,6 +152,19 @@ export default function CheckoutSection({
           Save your account
         </Button>
       </Card>
+    )
+  }
+
+  if (showPostPaymentForm) {
+    return (
+      <PostPaymentDetailsForm
+        orderId={orderId}
+        recommendedValueCents={recommendedValueCents}
+        onGenerated={(docs) => {
+          setStatus('documents_generated')
+          setDocuments(docs)
+        }}
+      />
     )
   }
 
@@ -187,12 +200,12 @@ export default function CheckoutSection({
         <Card className="mt-8 p-6 md:p-8">
           <h2 className="text-lg font-semibold text-foreground">Almost there</h2>
           <p className="mt-1 text-sm text-foreground-muted">
-            We need your name and email so we can put them on your appeal application and send
-            you your package.
+            We need your name and email so we can put them on your appeal application and send you
+            your package.
           </p>
           <form onSubmit={handleCompletionSubmit} className="mt-4 space-y-4">
-            {neededForCheckout.map((field) => {
-              const meta = NAME_EMAIL_META[field]
+            {neededTextFields.map((field) => {
+              const meta = TEXT_FIELD_META[field]
               return (
                 <div key={field}>
                   <label className="mb-1.5 block text-sm font-medium text-foreground">

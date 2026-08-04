@@ -138,6 +138,7 @@ export default async function OrderPage({
                     initialStatus={order.status}
                     checkoutResult={checkout}
                     missingFields={missing_fields}
+                    recommendedValueCents={comps.market_value_cents}
                   />
                 </>
               )}
@@ -269,7 +270,10 @@ function PackagePreviewCard() {
         </p>
 
         <p className="mt-5 rounded-[var(--radius-sm)] bg-success-tint px-4 py-3 text-sm text-success">
-          <b>Rest assured:</b> if your appeal is not successful, you&apos;ll receive a full refund.
+          <b>Our commitment:</b> if anything in your package is inaccurate or incomplete because of
+          an error on our end, contact support and we&apos;ll fix it or make it right. We can&apos;t
+          guarantee the outcome of your county&apos;s independent review — no one honestly can — but
+          we stand behind the accuracy of what we generate.
         </p>
       </Card>
     </>
@@ -286,11 +290,18 @@ function CompsSection({
   return (
     <>
       <h2 className="mt-10 text-lg font-semibold text-foreground">Comparable Properties</h2>
-      {comps.source !== 'verified' && (
+      {comps.source === 'demo' ? (
         <p className="mt-2 rounded-[var(--radius-sm)] bg-warning-tint px-4 py-3 text-sm text-warning">
-          These figures are a draft estimate and are not yet independently verified. Final values
-          may differ.
+          These are placeholder example figures, not based on your actual property — real
+          comparable sales data isn&apos;t configured for this environment yet.
         </p>
+      ) : (
+        comps.source !== 'verified' && (
+          <p className="mt-2 rounded-[var(--radius-sm)] bg-warning-tint px-4 py-3 text-sm text-warning">
+            These figures come from an automated market estimate and are not independently
+            verified by an appraiser. Final values may differ.
+          </p>
+        )
       )}
       <Card className="mt-4 overflow-hidden">
         <table className="w-full text-sm">
