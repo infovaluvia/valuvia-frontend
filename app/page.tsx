@@ -14,15 +14,15 @@ import FinalCTA from "@/components/home/FinalCTA";
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ address?: string }>;
+  searchParams: Promise<{ address?: string; code?: string }>;
 }) {
-  const { address } = await searchParams;
+  const { address, code } = await searchParams;
 
   return (
     <>
       <Navbar />
       <main className="flex-1">
-        <AppealIntakeHero initialAddress={address ?? ""} />
+        <AppealIntakeHero initialAddress={address ?? ""} initialCode={code ?? ""} />
         <SampleAnalysis />
         <ServiceChoices />
         <HowItWorks />
