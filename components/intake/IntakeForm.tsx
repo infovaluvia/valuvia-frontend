@@ -15,9 +15,26 @@ import { COUNTY_ASSESSOR_LINKS, countyToSlug } from '@/lib/county-assessor-links
 // optional here and can be filled in later, right before checkout. This
 // keeps the first step frictionless; uploading a tax bill (OCR) can fill
 // most of it in automatically, or the user can type it all manually.
-export default function IntakeForm({ initialAddress = '' }: { initialAddress?: string }) {
+export default function IntakeForm({
+  initialAddress = '',
+  initialCode = '',
+}: {
+  initialAddress?: string
+  initialCode?: string
+}) {
   const router = useRouter()
   const addressContainerRef = useRef<HTMLDivElement>(null)
+
+  // A mailer letter carries a per-homeowner code (typed in, or arrived
+  // via the QR code's ?code= param) that looks up assessor data already
+  // printed on the letter, so they don't have to retype their own
+  // address/APN/assessed value. leadCode is threaded through to order
+  // creation so the backend can mark it redeemed.
+  const [code, setCode] = useState(initialCode.toUpperCase())
+  const [leadCode, setLeadCode] = useState<string | null>(null)
+  const [codeLoading, setCodeLoading] = useState(false)
+  const [codeError, setCodeError] = useState<string | null>(null)
+  const [codeApplied, setCodeApplied] = useState(false)
 
   const [situsAddress, setSitusAddress] = useState(initialAddress)
   const [county, setCounty] = useState('')
@@ -87,6 +104,48 @@ export default function IntakeForm({ initialAddress = '' }: { initialAddress?: s
       container.innerHTML = ''
     }
   }, [placesLib, addressConfirmed])
+
+  async function lookupCode(rawCode: string) {
+    const normalized = rawCode.trim().toUpperCase()
+    if (!normalized) return
+    setCodeError(null)
+    setCodeLoading(true)
+    try {
+      const lead = await apiFetch(`/api/v1/leads/${encodeURIComponent(normalized)}`)
+      setSitusAddress(lead.situs_address)
+      setAddressConfirmed(true)
+      setCounty(lead.county || '')
+      setState(lead.state || '')
+      setParsedAddress({
+        formattedAddress: lead.situs_address,
+        street: '',
+        city: '',
+        county: lead.county || '',
+        state: lead.state || '',
+        zip: '',
+      })
+      if (lead.apn) setApn(lead.apn)
+      if (lead.assessed_value_cents != null) {
+        setAssessedValue(sanitizeMoneyString((lead.assessed_value_cents / 100).toFixed(2)))
+      }
+      if (lead.owner_name) setOwnerName(lead.owner_name)
+      if (lead.owner_email) setOwnerEmail(lead.owner_email)
+      if (lead.owner_phone) setOwnerPhone(lead.owner_phone)
+      setLeadCode(normalized)
+      setCodeApplied(true)
+    } catch {
+      setCodeError("We couldn't find that code — double check your letter, or just fill in the form below.")
+    } finally {
+      setCodeLoading(false)
+    }
+  }
+
+  // Auto-redeem when the code arrives via the letter's QR link
+  // (?code=... on the homepage) so scanning it requires no typing.
+  useEffect(() => {
+    if (initialCode.trim()) lookupCode(initialCode)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function handleBillUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -159,6 +218,7 @@ export default function IntakeForm({ initialAddress = '' }: { initialAddress?: s
         body: JSON.stringify({
           property_id: property.id,
           apn: apn || undefined,
+          lead_code: leadCode || undefined,
           assessed_value_cents: assessedCents,
           owner_name: ownerName || undefined,
           owner_email: ownerEmail || undefined,
@@ -179,6 +239,56 @@ export default function IntakeForm({ initialAddress = '' }: { initialAddress?: s
   return (
     <div className="mx-auto max-w-[560px]">
       <Card className="p-6 md:p-8">
+        <div className="mb-6 rounded-[var(--radius-sm)] border border-primary/30 bg-primary-tint p-4">
+          {codeApplied ? (
+            <div className="flex items-center justify-between gap-3">
+              <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <CheckCircleIcon />
+                Code applied — we&apos;ve filled in your property details below.
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setCodeApplied(false)
+                  setLeadCode(null)
+                  setCode('')
+                }}
+                className="flex-shrink-0 text-xs font-semibold text-primary hover:underline"
+              >
+                Not your letter?
+              </button>
+            </div>
+          ) : (
+            <>
+              <label className="mb-2 block text-sm font-medium text-foreground">
+                Have a code from your letter?
+              </label>
+              <p className="mb-3 text-xs text-foreground-muted">
+                Enter the code printed on your Valuvia mailer to skip straight to your prefilled
+                property details.
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.toUpperCase())}
+                  placeholder="e.g. 5UUE7U"
+                  className="uppercase tracking-wide"
+                />
+                <Button
+                  type="button"
+                  onClick={() => lookupCode(code)}
+                  disabled={codeLoading || !code.trim()}
+                  className="flex-shrink-0"
+                >
+                  {codeLoading ? 'Looking up…' : 'Apply code'}
+                </Button>
+              </div>
+              {codeError && <p className="mt-2 text-xs text-error">{codeError}</p>}
+            </>
+          )}
+        </div>
+
         <div className="mb-6 rounded-[var(--radius-sm)] border border-border bg-surface-alt p-4">
           <label className="mb-2 block text-sm font-medium text-foreground">
             Upload your tax bill or assessment notice (optional)

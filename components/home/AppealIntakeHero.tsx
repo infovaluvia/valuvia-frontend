@@ -1,6 +1,12 @@
 import IntakeForm from "@/components/intake/IntakeForm";
 
-export default function AppealIntakeHero({ initialAddress = "" }: { initialAddress?: string }) {
+export default function AppealIntakeHero({
+  initialAddress = "",
+  initialCode = "",
+}: {
+  initialAddress?: string;
+  initialCode?: string;
+}) {
   return (
     <section id="start" className="relative overflow-hidden border-b border-border bg-background">
       <div
@@ -63,7 +69,7 @@ export default function AppealIntakeHero({ initialAddress = "" }: { initialAddre
             </div>
           </div>
 
-          <IntakeForm initialAddress={initialAddress} />
+          <IntakeForm initialAddress={initialAddress} initialCode={initialCode} />
         </div>
       </div>
     </section>
