@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiFetch } from '@/lib/api'
 import { getStoredAttribution } from '@/lib/attribution'
@@ -13,7 +13,13 @@ import Button from '@/components/ui/Button'
 // rather than exposed as a field.
 const JURISDICTION_CODE = 'santa-clara'
 
-export default function IntakeForm({ initialAddress = '' }: { initialAddress?: string }) {
+export default function IntakeForm({
+  initialAddress = '',
+  lookupCode,
+}: {
+  initialAddress?: string
+  lookupCode?: string
+}) {
   const router = useRouter()
 
   const [situsAddress, setSitusAddress] = useState(initialAddress)
@@ -26,6 +32,38 @@ export default function IntakeForm({ initialAddress = '' }: { initialAddress?: s
 
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [lookupLoading, setLookupLoading] = useState(!!lookupCode)
+  const [lookupError, setLookupError] = useState<string | null>(null)
+  const [prefilled, setPrefilled] = useState(false)
+
+  useEffect(() => {
+    if (!lookupCode) return
+    let cancelled = false
+    apiFetch(`/api/v1/mail-campaign/lookup/${encodeURIComponent(lookupCode)}`)
+      .then((lead) => {
+        if (cancelled) return
+        setSitusAddress(lead.situs_address ?? '')
+        setApn(lead.apn ?? '')
+        if (lead.assessed_value_cents) {
+          setAssessedValue((lead.assessed_value_cents / 100).toFixed(2))
+        }
+        if (lead.owner_name) setOwnerName(lead.owner_name)
+        setPrefilled(true)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLookupError(
+            `We couldn't find that code (${lookupCode}). You can still fill in your details below.`
+          )
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLookupLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [lookupCode])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -88,6 +126,20 @@ export default function IntakeForm({ initialAddress = '' }: { initialAddress?: s
       <p className="mt-2 text-center text-sm text-foreground-muted">
         Santa Clara County, CA. Takes about 2 minutes.
       </p>
+
+      {lookupLoading && (
+        <p className="mt-4 text-center text-sm text-foreground-muted">Looking up your code…</p>
+      )}
+      {prefilled && !lookupLoading && (
+        <p className="mt-4 rounded-[var(--radius-sm)] bg-success-tint px-4 py-3 text-center text-sm text-success">
+          We found your property details from your letter — check them below before continuing.
+        </p>
+      )}
+      {lookupError && (
+        <p className="mt-4 rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-center text-sm text-error">
+          {lookupError}
+        </p>
+      )}
 
       <Card className="mt-8 p-6 md:p-8">
         <form onSubmit={handleSubmit} className="space-y-5">
