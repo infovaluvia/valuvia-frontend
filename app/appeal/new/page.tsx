@@ -1,21 +1,13 @@
-import Navbar from '@/components/layout/Navbar'
-import Footer from '@/components/layout/Footer'
-import IntakeForm from '@/components/intake/IntakeForm'
+import { redirect } from 'next/navigation'
 
+// The intake form now lives directly on the homepage (see app/page.tsx +
+// components/home/AppealIntakeHero.tsx) so this route just forwards old
+// links/bookmarks there, preserving the ?address= prefill param.
 export default async function NewAppealPage({
   searchParams,
 }: {
   searchParams: Promise<{ address?: string }>
 }) {
   const { address } = await searchParams
-
-  return (
-    <>
-      <Navbar />
-      <main className="flex-1 bg-surface-alt py-12 md:py-16">
-        <IntakeForm initialAddress={address ?? ''} />
-      </main>
-      <Footer />
-    </>
-  )
+  redirect(address ? `/?address=${encodeURIComponent(address)}#start` : '/#start')
 }

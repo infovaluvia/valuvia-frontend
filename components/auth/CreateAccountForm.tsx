@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
+import Input from '@/components/ui/Input'
+import Button from '@/components/ui/Button'
 
 // Core component: upgrades the current anonymous account into a permanent
 // account (sets email + password). Since the user id doesn't change,
@@ -25,6 +27,7 @@ export default function CreateAccountForm() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setCurrentUser(data.user))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -61,51 +64,51 @@ export default function CreateAccountForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: 360, margin: '0 auto' }}>
-      <h2>Save Your Account</h2>
-      <p style={{ fontSize: 14, color: '#666' }}>
-        Set an email and password so you can come back anytime to view or re-download your files.
-      </p>
-
-      <div style={{ marginBottom: 12 }}>
-        <input
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-foreground">Email</label>
+        <Input
           type="email"
-          placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          style={{ width: '100%', padding: 8 }}
         />
       </div>
 
-      <div style={{ marginBottom: 12 }}>
-        <input
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-foreground">Password</label>
+        <Input
           type="password"
-          placeholder="Password (min 6 characters)"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
           minLength={6}
-          style={{ width: '100%', padding: 8 }}
+          placeholder="Min 6 characters"
         />
       </div>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      {message && <p style={{ color: 'green' }}>{message}</p>}
+      {error && (
+        <p className="rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
+          {error}
+        </p>
+      )}
+      {message && (
+        <p className="rounded-[var(--radius-sm)] bg-success-tint px-4 py-3 text-sm text-success">
+          {message}
+        </p>
+      )}
 
-      <button type="submit" disabled={loading} style={{ width: '100%', padding: 10 }}>
-        {loading ? 'Saving...' : 'Save Account'}
+      <Button type="submit" disabled={loading} className="w-full">
+        {loading ? 'Saving…' : 'Save Account'}
+      </Button>
+
+      <button
+        type="button"
+        onClick={() => router.push('/dashboard')}
+        className="block w-full text-center text-sm text-foreground-muted hover:text-foreground"
+      >
+        Skip for now
       </button>
-
-      <p style={{ marginTop: 12, textAlign: 'center' }}>
-        <button
-          type="button"
-          onClick={() => router.push('/dashboard')}
-          style={{ border: 'none', background: 'none', color: '#888', cursor: 'pointer' }}
-        >
-          Skip for now
-        </button>
-      </p>
     </form>
   )
 }

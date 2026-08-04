@@ -67,7 +67,15 @@
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
+  background-image:
+    radial-gradient(ellipse 1000px 700px at 8% -10%, rgba(31, 79, 214, 0.16), transparent 60%),
+    radial-gradient(ellipse 900px 700px at 100% 0%, rgba(184, 134, 11, 0.13), transparent 60%),
+    radial-gradient(ellipse 1000px 800px at 50% 115%, rgba(14, 124, 90, 0.12), transparent 60%),
+    radial-gradient(circle, rgba(15, 27, 51, 0.1) 1.2px, transparent 1.2px);
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+  background-size: 100% 100%, 100% 100%, 100% 100%, 28px 28px;
+  background-attachment: fixed;
   color: var(--foreground);
   font-feature-settings: "cv11", "ss01";
 }

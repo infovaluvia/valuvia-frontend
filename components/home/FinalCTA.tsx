@@ -1,20 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 
 export default function FinalCTA() {
-  const [address, setAddress] = useState("");
-  const router = useRouter();
-
-  function handleSubmit(e: React.FormEvent) {
+  function scrollToForm(e: React.MouseEvent) {
     e.preventDefault();
-    const params = address.trim()
-      ? `?address=${encodeURIComponent(address.trim())}`
-      : "";
-    router.push(`/appeal/new${params}`);
+    document.getElementById("start")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   return (
@@ -27,21 +18,9 @@ export default function FinalCTA() {
           It takes about 2 minutes, and it&apos;s free to see your estimate.
         </p>
 
-        <form
-          onSubmit={handleSubmit}
-          className="mx-auto mt-7 flex flex-col gap-3 sm:flex-row"
-        >
-          <Input
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="Enter your property address"
-            aria-label="Property address"
-            className="h-13 bg-white"
-          />
-          <Button type="submit" size="lg" className="w-full sm:w-auto">
-            Check My Property
-          </Button>
-        </form>
+        <Button href="/#start" onClick={scrollToForm} size="lg" className="mt-7">
+          Check My Property
+        </Button>
       </div>
     </section>
   );

@@ -11,7 +11,7 @@ import { apiFetchServer } from '@/lib/api-server'
 interface OrderSummary {
   id: string
   status: string
-  assessed_value_cents: number
+  assessed_value_cents: number | null
   requested_value_cents: number
   estimated_savings_cents: number
   created_at: string
@@ -22,7 +22,8 @@ function formatDollars(cents: number) {
   return (cents / 100).toLocaleString('en-US', {
     style: 'currency',
     currency: 'USD',
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   })
 }
 
@@ -72,7 +73,7 @@ export default async function DashboardPage() {
   return (
     <>
       <Navbar />
-      <main className="flex-1 bg-surface-alt py-10 md:py-14">
+      <main className="flex-1 py-10 md:py-14">
         <div className="mx-auto max-w-[900px] px-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -90,7 +91,7 @@ export default async function DashboardPage() {
               )}
             </div>
             <div className="flex items-center gap-3">
-              <Button href="/appeal/new" size="md">
+              <Button href="/#start" size="md">
                 Start New Appeal
               </Button>
               <Link
@@ -114,7 +115,7 @@ export default async function DashboardPage() {
               <p className="text-foreground-muted">
                 You don&apos;t have any appeals yet.
               </p>
-              <Button href="/appeal/new">Check My Property</Button>
+              <Button href="/#start">Check My Property</Button>
             </Card>
           )}
 

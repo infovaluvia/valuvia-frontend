@@ -8,10 +8,40 @@ const documents = [
       "Your official county appeal application, pre-filled with your property details, assessed value, and requested value — ready to sign and submit.",
   },
   {
-    label: "Evidence Packet",
-    title: "Hearing Evidence Packet",
+    label: "Volume 1",
+    title: "Executive Summary",
     description:
-      "A clean summary of comparable sales supporting your requested value, formatted to bring to your assessment appeals hearing.",
+      "A decision-ready overview of your assessment, the market evidence, and our recommended course of action.",
+  },
+  {
+    label: "Volume 2",
+    title: "Government Filing Package",
+    description:
+      "A completion worksheet and submission checklist matched to your county's official application.",
+  },
+  {
+    label: "Volume 3",
+    title: "Comparable Sales Report",
+    description:
+      "The comparable sales behind your requested value, one per page with full facts and sourcing.",
+  },
+  {
+    label: "Volume 4",
+    title: "Property Condition Report",
+    description:
+      "Owner-reported condition observations, framed for the value-reducing adjustments they can support.",
+  },
+  {
+    label: "Volume 5",
+    title: "Evidence Book",
+    description:
+      "The full evidentiary record: property profile, assessment history, and adjustment framework.",
+  },
+  {
+    label: "Volume 6",
+    title: "Hearing Binder",
+    description:
+      "Opening statement, anticipated Board questions, and a recommended presentation order for your hearing.",
   },
 ];
 
@@ -24,14 +54,14 @@ export default function SamplePackage() {
             What&apos;s in your appeal package
           </h2>
           <p className="mt-2 text-foreground-muted">
-            Two documents, generated for your property and ready to file.
+            Seven documents, generated for your property and ready to file.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-2">
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {documents.map((doc) => (
             <Card key={doc.title} className="overflow-hidden">
-              <div className="flex h-40 items-center justify-center border-b border-border bg-surface-alt">
+              <div className="flex h-32 items-center justify-center border-b border-border bg-surface-alt">
                 <DocumentGlyph />
               </div>
               <div className="p-6">
@@ -55,7 +85,7 @@ export default function SamplePackage() {
 
 function DocumentGlyph() {
   return (
-    <svg width="64" height="76" viewBox="0 0 64 76" fill="none">
+    <svg width="56" height="66" viewBox="0 0 64 76" fill="none">
       <rect
         x="1.5"
         y="1.5"

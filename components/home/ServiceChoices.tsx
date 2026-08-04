@@ -55,7 +55,7 @@ export default function ServiceChoices() {
                 </li>
               ))}
             </ul>
-            <Button href="/appeal/new" className="mt-8 w-full">
+            <Button href="/#start" className="mt-8 w-full">
               Get My Appeal Package — $79
             </Button>
           </Card>
@@ -79,7 +79,7 @@ export default function ServiceChoices() {
                 </li>
               ))}
             </ul>
-            <Button href="/appeal/new" variant="secondary" className="mt-8 w-full">
+            <Button href="/#start" variant="secondary" className="mt-8 w-full">
               Join the Waitlist
             </Button>
           </Card>

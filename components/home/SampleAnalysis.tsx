@@ -32,19 +32,19 @@ export default function SampleAnalysis() {
             <div>
               <p className="text-xs text-foreground-muted">Assessed value</p>
               <p className="mt-1 text-xl font-bold text-foreground">
-                $1,777,522
+                $1,777,522.00
               </p>
             </div>
             <div>
               <p className="text-xs text-foreground-muted">Market estimate</p>
               <p className="mt-1 text-xl font-bold text-foreground">
-                $1,614,000
+                $1,614,000.00
               </p>
             </div>
             <div>
               <p className="text-xs text-foreground-muted">Est. first-year savings</p>
               <p className="mt-1 text-xl font-bold text-accent-green">
-                $1,909
+                $1,909.00
               </p>
             </div>
           </div>

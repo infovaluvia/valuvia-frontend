@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import Input from '@/components/ui/Input'
+import Button from '@/components/ui/Button'
 
 // For existing users to log back in (e.g. on a new device/browser).
 // Note: if the current browser already has an anonymous session (not yet
@@ -36,36 +38,36 @@ export default function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: 360, margin: '0 auto' }}>
-      <h2>Log In</h2>
-
-      <div style={{ marginBottom: 12 }}>
-        <input
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-foreground">Email</label>
+        <Input
           type="email"
-          placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          style={{ width: '100%', padding: 8 }}
         />
       </div>
 
-      <div style={{ marginBottom: 12 }}>
-        <input
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-foreground">Password</label>
+        <Input
           type="password"
-          placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          style={{ width: '100%', padding: 8 }}
         />
       </div>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && (
+        <p className="rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
+          {error}
+        </p>
+      )}
 
-      <button type="submit" disabled={loading} style={{ width: '100%', padding: 10 }}>
-        {loading ? 'Logging in...' : 'Log In'}
-      </button>
+      <Button type="submit" disabled={loading} className="w-full">
+        {loading ? 'Logging in…' : 'Log In'}
+      </Button>
     </form>
   )
 }

@@ -4,22 +4,30 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiFetch } from '@/lib/api'
 import Card from '@/components/ui/Card'
+import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 
 interface DocumentItem {
-  id: string
   kind: string
+  label: string
   url: string
+}
+
+const NAME_EMAIL_META: Record<string, { label: string; type: string }> = {
+  owner_name: { label: 'Owner name', type: 'text' },
+  owner_email: { label: 'Owner email', type: 'email' },
 }
 
 export default function CheckoutSection({
   orderId,
   initialStatus,
   checkoutResult,
+  missingFields,
 }: {
   orderId: string
   initialStatus: string
   checkoutResult?: string // "success" | "cancelled" | undefined
+  missingFields: string[]
 }) {
   const router = useRouter()
 
@@ -27,6 +35,14 @@ export default function CheckoutSection({
   const [documents, setDocuments] = useState<DocumentItem[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Only owner_name/owner_email can still be missing by the time this
+  // renders (assessed value is required back on the intake page) — the
+  // buy button is always visible; clicking it is what reveals these
+  // fields, rather than blocking the button from appearing at all.
+  const neededForCheckout = missingFields.filter((f) => f in NAME_EMAIL_META)
+  const [showCompletionForm, setShowCompletionForm] = useState(false)
+  const [values, setValues] = useState<Record<string, string>>({})
 
   useEffect(() => {
     async function loadOrGenerate() {
@@ -50,10 +66,7 @@ export default function CheckoutSection({
             method: 'POST',
           })
           setStatus('documents_generated')
-          setDocuments([
-            { id: 'official', kind: 'official_form', url: result.official_form_url },
-            { id: 'evidence', kind: 'evidence_packet', url: result.evidence_packet_url },
-          ])
+          setDocuments(result.documents)
         } catch (e) {
           setError(e instanceof Error ? e.message : 'Document generation failed')
         } finally {
@@ -70,9 +83,40 @@ export default function CheckoutSection({
     setLoading(true)
     try {
       const result = await apiFetch(`/api/v1/orders/${orderId}/checkout`, { method: 'POST' })
-      window.location.href = result.checkout_url
+      window.location.assign(result.checkout_url)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not start checkout')
+      setLoading(false)
+    }
+  }
+
+  function handleBuyClick() {
+    if (neededForCheckout.length > 0) {
+      setShowCompletionForm(true)
+      return
+    }
+    handlePay()
+  }
+
+  async function handleCompletionSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+
+    for (const field of neededForCheckout) {
+      if (!values[field]?.trim()) {
+        setError('Please fill in your name and email to continue.')
+        return
+      }
+    }
+
+    setLoading(true)
+    try {
+      const body: Record<string, string> = {}
+      for (const field of neededForCheckout) body[field] = values[field].trim()
+      await apiFetch(`/api/v1/orders/${orderId}`, { method: 'PATCH', body: JSON.stringify(body) })
+      await handlePay()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
       setLoading(false)
     }
   }
@@ -83,35 +127,23 @@ export default function CheckoutSection({
     )
   }
 
-  if (error) {
-    return (
-      <div className="mt-8">
-        <p className="rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
-          {error}
-        </p>
-        <Button onClick={handlePay} className="mt-4 w-full">
-          Try again
-        </Button>
-      </div>
-    )
-  }
-
   if (documents) {
     return (
       <Card className="mt-8 p-6 md:p-8">
-        <h2 className="text-lg font-semibold text-foreground">Your Documents</h2>
+        <h2 className="text-lg font-semibold text-foreground">Your Appeal Package</h2>
+        <p className="mt-1 text-sm text-foreground-muted">
+          We&apos;ve also emailed you these links. Download now, or come back to this page any time.
+        </p>
         <ul className="mt-4 space-y-2">
           {documents.map((d) => (
-            <li key={d.id}>
+            <li key={d.kind}>
               <a
                 href={d.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm font-medium text-primary hover:underline"
               >
-                {d.kind === 'official_form'
-                  ? 'Official Application (PDF)'
-                  : 'Hearing Evidence Packet (PDF)'}
+                {d.label}
               </a>
             </li>
           ))}
@@ -123,24 +155,71 @@ export default function CheckoutSection({
     )
   }
 
-  if (checkoutResult === 'cancelled') {
+  if (error) {
+    return (
+      <div className="mt-8">
+        <p className="rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
+          {error}
+        </p>
+        <Button onClick={handleBuyClick} className="mt-4 w-full">
+          Try again
+        </Button>
+      </div>
+    )
+  }
+
+  if (checkoutResult === 'cancelled' && !showCompletionForm) {
     return (
       <Card className="mt-8 p-6 text-center md:p-8">
         <p className="text-sm text-foreground-muted">
           Checkout was cancelled — no charge was made.
         </p>
-        <Button onClick={handlePay} className="mt-4 w-full">
-          Try again — Get My Appeal Package ($79)
+        <Button onClick={handleBuyClick} className="mt-4 w-full">
+          Try again — I Am Ready to Buy ($79)
         </Button>
       </Card>
     )
   }
 
   if (status === 'intake' || status === 'comps_review') {
+    if (showCompletionForm) {
+      return (
+        <Card className="mt-8 p-6 md:p-8">
+          <h2 className="text-lg font-semibold text-foreground">Almost there</h2>
+          <p className="mt-1 text-sm text-foreground-muted">
+            We need your name and email so we can put them on your appeal application and send
+            you your package.
+          </p>
+          <form onSubmit={handleCompletionSubmit} className="mt-4 space-y-4">
+            {neededForCheckout.map((field) => {
+              const meta = NAME_EMAIL_META[field]
+              return (
+                <div key={field}>
+                  <label className="mb-1.5 block text-sm font-medium text-foreground">
+                    {meta.label}
+                    <span className="ml-1 text-error">*</span>
+                  </label>
+                  <Input
+                    type={meta.type}
+                    value={values[field] ?? ''}
+                    onChange={(e) => setValues((v) => ({ ...v, [field]: e.target.value }))}
+                    required
+                  />
+                </div>
+              )
+            })}
+            <Button type="submit" size="lg" className="w-full">
+              Continue to Payment
+            </Button>
+          </form>
+        </Card>
+      )
+    }
+
     return (
       <div className="mt-8">
-        <Button onClick={handlePay} size="lg" className="w-full">
-          Get My Appeal Package — $79
+        <Button onClick={handleBuyClick} size="lg" className="w-full">
+          I Am Ready to Buy — $79
         </Button>
       </div>
     )
