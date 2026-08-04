@@ -286,11 +286,18 @@ function CompsSection({
   return (
     <>
       <h2 className="mt-10 text-lg font-semibold text-foreground">Comparable Properties</h2>
-      {comps.source !== 'verified' && (
+      {comps.source === 'demo' ? (
         <p className="mt-2 rounded-[var(--radius-sm)] bg-warning-tint px-4 py-3 text-sm text-warning">
-          These figures are a draft estimate and are not yet independently verified. Final values
-          may differ.
+          These are placeholder example figures, not based on your actual property — real
+          comparable sales data isn&apos;t configured for this environment yet.
         </p>
+      ) : (
+        comps.source !== 'verified' && (
+          <p className="mt-2 rounded-[var(--radius-sm)] bg-warning-tint px-4 py-3 text-sm text-warning">
+            These figures come from an automated market estimate and are not independently
+            verified by an appraiser. Final values may differ.
+          </p>
+        )
       )}
       <Card className="mt-4 overflow-hidden">
         <table className="w-full text-sm">
