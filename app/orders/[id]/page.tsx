@@ -54,14 +54,16 @@ interface OrderData {
     id: string
     status: string
     assessed_value_cents: number | null
-    requested_value_cents: number
-    estimated_savings_cents: number
+    requested_value_cents: number | null
+    estimated_savings_cents: number | null
     recommendation_json: Recommendation | null
   }
   comps: {
     source: string
     comps: Comp[]
     market_value_cents: number
+    assessment_year?: number
+    lien_date?: string
   }
   jurisdiction: Jurisdiction | null
   screening: Screening | null
@@ -333,6 +335,14 @@ function CompsSection({
             verified by an appraiser. Final values may differ.
           </p>
         )
+      )}
+      {comps.assessment_year && comps.lien_date && (
+        <p className="mt-2 text-xs text-foreground-muted">
+          A California decline-in-value appeal for the {comps.assessment_year} assessment roll is
+          about fair market value as of the January 1, {comps.assessment_year} lien date — these
+          figures reflect recent comparable sales and have not been separately adjusted to that
+          date.
+        </p>
       )}
       {comps.comps.length === 0 ? (
         <Card className="mt-4 p-6 text-center text-sm text-foreground-muted">
