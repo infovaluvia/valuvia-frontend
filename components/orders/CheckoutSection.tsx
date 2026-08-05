@@ -46,6 +46,8 @@ export default function CheckoutSection({
   const [checkingReview, setCheckingReview] = useState(false)
   const [stillUnderReview, setStillUnderReview] = useState(false)
   const [acknowledged, setAcknowledged] = useState(false)
+  const [ownerFiled, setOwnerFiled] = useState(initialStatus === 'owner_filed')
+  const [reportingFiled, setReportingFiled] = useState(false)
 
   const filingFeeLabel =
     filingFeeCents != null
@@ -64,7 +66,7 @@ export default function CheckoutSection({
 
   useEffect(() => {
     async function loadOrShowPostPayment() {
-      if (status === 'documents_generated') {
+      if (status === 'documents_generated' || status === 'owner_filed') {
         setLoading(true)
         try {
           const docs = await apiFetch(`/api/v1/orders/${orderId}/documents`)
@@ -104,6 +106,19 @@ export default function CheckoutSection({
       setError(e instanceof Error ? e.message : 'Failed to check on your package')
     } finally {
       setCheckingReview(false)
+    }
+  }
+
+  async function handleReportFiled() {
+    setReportingFiled(true)
+    setError(null)
+    try {
+      await apiFetch(`/api/v1/orders/${orderId}/report-filed`, { method: 'POST' })
+      setOwnerFiled(true)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not save that — please try again.')
+    } finally {
+      setReportingFiled(false)
     }
   }
 
@@ -184,10 +199,17 @@ export default function CheckoutSection({
     return (
       <Card className="mt-8 p-6 md:p-8">
         <h2 className="text-lg font-semibold text-foreground">Your Appeal Package</h2>
-        <p className="mt-3 rounded-[var(--radius-sm)] bg-surface-alt px-4 py-3 text-sm font-medium text-foreground">
-          Not filed by Valuvia — you review, sign, and submit this yourself. See your Government
-          Filing Package below for the submission checklist and deadline.
-        </p>
+        {ownerFiled ? (
+          <p className="mt-3 rounded-[var(--radius-sm)] bg-success-tint px-4 py-3 text-sm font-medium text-success">
+            Filed by owner — customer reported. Valuvia did not file this on your behalf; you told
+            us you&apos;ve submitted it.
+          </p>
+        ) : (
+          <p className="mt-3 rounded-[var(--radius-sm)] bg-surface-alt px-4 py-3 text-sm font-medium text-foreground">
+            Not filed by Valuvia — you review, sign, and submit this yourself. See your Government
+            Filing Package below for the submission checklist and deadline.
+          </p>
+        )}
         <p className="mt-3 text-sm text-foreground-muted">
           We&apos;ve also emailed you these links (with your receipt). Download now, or come back to
           this page any time.
@@ -206,6 +228,25 @@ export default function CheckoutSection({
             </li>
           ))}
         </ul>
+
+        {!ownerFiled && (
+          <>
+            {error && (
+              <p className="mt-4 rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
+                {error}
+              </p>
+            )}
+            <Button
+              onClick={handleReportFiled}
+              disabled={reportingFiled}
+              variant="secondary"
+              className="mt-4 w-full"
+            >
+              {reportingFiled ? 'Saving…' : "I've Filed My Appeal"}
+            </Button>
+          </>
+        )}
+
         <Button onClick={() => router.push(`/account/save?from=checkout`)} className="mt-6 w-full">
           Save your account
         </Button>
