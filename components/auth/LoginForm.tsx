@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
+import Field from '@/components/ui/Field'
 
 // For existing users to log back in (e.g. on a new device/browser).
 // Note: if the current browser already has an anonymous session (not yet
@@ -39,28 +40,26 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-foreground">Email</label>
+      <Field label="Email" required>
         <Input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-      </div>
+      </Field>
 
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-foreground">Password</label>
+      <Field label="Password" required>
         <Input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-      </div>
+      </Field>
 
       {error && (
-        <p className="rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
+        <p role="alert" className="rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
           {error}
         </p>
       )}

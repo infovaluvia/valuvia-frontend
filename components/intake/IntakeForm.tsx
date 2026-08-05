@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { track } from '@vercel/analytics'
 import { apiFetch, apiFetchUpload } from '@/lib/api'
@@ -9,6 +9,7 @@ import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import MoneyInput, { sanitizeMoneyString } from '@/components/ui/MoneyInput'
 import Button from '@/components/ui/Button'
+import Field from '@/components/ui/Field'
 import { COUNTY_ASSESSOR_LINKS, countyToSlug } from '@/lib/county-assessor-links'
 
 // Single-page intake: the only required field is the property address —
@@ -25,6 +26,9 @@ export default function IntakeForm({
 }) {
   const router = useRouter()
   const addressContainerRef = useRef<HTMLDivElement>(null)
+  const codeInputId = useId()
+  const billUploadId = useId()
+  const addressLabelId = useId()
 
   // A mailer letter carries a per-homeowner code (typed in, or arrived
   // via the QR code's ?code= param) that looks up assessor data already
@@ -320,20 +324,23 @@ export default function IntakeForm({
             </div>
           ) : (
             <>
-              <label className="mb-2 block text-sm font-medium text-foreground">
+              <label htmlFor={codeInputId} className="mb-2 block text-sm font-medium text-foreground">
                 Have a code from your letter?
               </label>
-              <p className="mb-3 text-xs text-foreground-muted">
+              <p id={`${codeInputId}-hint`} className="mb-3 text-xs text-foreground-muted">
                 Enter the code printed on your Valuvia mailer to skip straight to your prefilled
                 property details.
               </p>
               <div className="flex gap-2">
                 <Input
+                  id={codeInputId}
                   type="text"
                   value={code}
                   onChange={(e) => setCode(e.target.value.toUpperCase())}
                   placeholder="e.g. 5UUE7U"
                   className="uppercase tracking-wide"
+                  aria-describedby={`${codeInputId}-hint`}
+                  aria-invalid={codeError ? true : undefined}
                 />
                 <Button
                   type="button"
@@ -344,34 +351,44 @@ export default function IntakeForm({
                   {codeLoading ? 'Looking up…' : 'Apply code'}
                 </Button>
               </div>
-              {codeError && <p className="mt-2 text-xs text-error">{codeError}</p>}
+              {codeError && <p role="alert" className="mt-2 text-xs text-error">{codeError}</p>}
             </>
           )}
         </div>
 
         <div className="mb-6 rounded-[var(--radius-sm)] border border-border bg-surface-alt p-4">
-          <label className="mb-2 block text-sm font-medium text-foreground">
+          <label htmlFor={billUploadId} className="mb-2 block text-sm font-medium text-foreground">
             Upload your tax bill or assessment notice (optional)
           </label>
-          <p className="mb-3 text-xs text-foreground-muted">
+          <p id={`${billUploadId}-hint`} className="mb-3 text-xs text-foreground-muted">
             We&apos;ll read the address, county, APN, owner name, and assessed value for you —
             you can still edit anything below before continuing.
           </p>
           <input
+            id={billUploadId}
             type="file"
             accept="application/pdf,image/*"
             onChange={handleBillUpload}
             disabled={ocrLoading}
+            aria-describedby={`${billUploadId}-hint`}
             className="block w-full text-sm text-foreground-muted file:mr-4 file:rounded-[var(--radius-sm)] file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary/90"
           />
-          {ocrLoading && <p className="mt-2 text-xs text-foreground-muted">Reading your document…</p>}
-          {ocrError && <p className="mt-2 text-xs text-error">{ocrError}</p>}
+          {ocrLoading && <p role="status" className="mt-2 text-xs text-foreground-muted">Reading your document…</p>}
+          {ocrError && <p role="alert" className="mt-2 text-xs text-error">{ocrError}</p>}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          <Field label="Property address" required>
+          <div>
+            <label id={addressLabelId} className="mb-1.5 block text-sm font-medium text-foreground">
+              Property address
+              <span aria-hidden="true" className="ml-1 text-error">*</span>
+              <span className="sr-only"> (required)</span>
+            </label>
             {addressConfirmed ? (
-              <div className="flex items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-border bg-surface-alt px-4 py-3">
+              <div
+                aria-labelledby={addressLabelId}
+                className="flex items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-border bg-surface-alt px-4 py-3"
+              >
                 <span className="flex items-center gap-2 text-sm text-foreground">
                   <CheckCircleIcon />
                   {situsAddress}
@@ -389,9 +406,10 @@ export default function IntakeForm({
               </div>
             ) : (
               <>
-                <div ref={addressContainerRef} className={placesLib ? '' : 'hidden'} />
+                <div ref={addressContainerRef} aria-labelledby={addressLabelId} className={placesLib ? '' : 'hidden'} />
                 {!placesLib && (
                   <Input
+                    aria-labelledby={addressLabelId}
                     type="text"
                     value={situsAddress}
                     onChange={(e) => setSitusAddress(e.target.value)}
@@ -409,7 +427,7 @@ export default function IntakeForm({
                   : 'Enter your county and state below if suggestions don’t appear.'}
               </p>
             )}
-          </Field>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <Field label="County (optional)">
@@ -495,7 +513,7 @@ export default function IntakeForm({
           </p>
 
           {error && (
-            <p className="rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
+            <p role="alert" className="rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
               {error}
             </p>
           )}
@@ -515,25 +533,5 @@ function CheckCircleIcon() {
       <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1.5" />
       <path d="M6 10l2.5 2.5L14 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
-  )
-}
-
-function Field({
-  label,
-  required = false,
-  children,
-}: {
-  label: string
-  required?: boolean
-  children: React.ReactNode
-}) {
-  return (
-    <div>
-      <label className="mb-1.5 block text-sm font-medium text-foreground">
-        {label}
-        {required && <span className="ml-1 text-error">*</span>}
-      </label>
-      {children}
-    </div>
   )
 }
