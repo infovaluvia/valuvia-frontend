@@ -390,7 +390,14 @@ export default function IntakeForm({
                       Is this the property you want to review?
                     </p>
                     <div className="mt-2.5 flex flex-wrap gap-2">
-                      <Button type="button" size="md" onClick={() => setPropertyConfirmed(true)}>
+                      <Button
+                        type="button"
+                        size="md"
+                        onClick={() => {
+                          setPropertyConfirmed(true)
+                          track('property_confirmed')
+                        }}
+                      >
                         Yes, continue
                       </Button>
                       <Button type="button" variant="secondary" size="md" onClick={resetAddress}>

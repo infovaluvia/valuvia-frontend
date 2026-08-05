@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { track } from '@vercel/analytics'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import Input from '@/components/ui/Input'
@@ -45,6 +46,7 @@ export default function CreateAccountForm() {
         setError(error.message)
       } else {
         setMessage('Account saved! You can now log in with this email and password on any device.')
+        track('account_activated')
       }
     } else {
       // Fallback: no anonymous session exists (e.g. cookies were cleared),
