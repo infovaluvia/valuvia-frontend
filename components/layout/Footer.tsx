@@ -26,6 +26,7 @@ const columns = [
       { href: "/legal/terms", label: "Terms of Service" },
       { href: "/legal/privacy", label: "Privacy Policy" },
       { href: "/legal/disclaimer", label: "Disclaimer" },
+      { href: "/legal/refund", label: "Refund Policy" },
     ],
   },
 ];
@@ -41,7 +42,7 @@ export default function Footer() {
               <span className="text-sm font-bold text-foreground">Valuvia</span>
             </div>
             <p className="mt-3 max-w-[220px] text-sm text-foreground-muted">
-              Property tax appeal support for U.S. homeowners.
+              Independent property assessment review for Santa Clara County, CA homeowners.
             </p>
           </div>
 
