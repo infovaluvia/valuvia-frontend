@@ -20,6 +20,7 @@ export default function TrustSection() {
   return (
     <section id="trust" className="bg-surface-alt py-16 md:py-24">
       <div className="mx-auto max-w-[1180px] px-6 md:px-8">
+        <h2 className="sr-only">Why you can trust Valuvia</h2>
         <div className="grid gap-10 md:grid-cols-3">
           {points.map((p) => (
             <div key={p.title} className="flex gap-4">
