@@ -6,7 +6,6 @@ import ServiceChoices from "@/components/home/ServiceChoices";
 import HowItWorks from "@/components/home/HowItWorks";
 import SamplePackage from "@/components/home/SamplePackage";
 import TrustSection from "@/components/home/TrustSection";
-import Testimonials from "@/components/home/Testimonials";
 import CountyCoverage from "@/components/home/CountyCoverage";
 import FAQ from "@/components/home/FAQ";
 import FinalCTA from "@/components/home/FinalCTA";
@@ -28,7 +27,6 @@ export default async function Home({
         <HowItWorks />
         <SamplePackage />
         <TrustSection />
-        <Testimonials />
         <CountyCoverage />
         <FAQ />
         <FinalCTA />
