@@ -164,6 +164,8 @@ export default async function OrderPage({
                     checkoutResult={checkout}
                     missingFields={missing_fields}
                     recommendedValueCents={comps.market_value_cents}
+                    filingFeeCents={jurisdiction?.filing_fee_cents}
+                    countyName={jurisdiction?.name}
                   />
                 </>
               )}

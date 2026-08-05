@@ -9,13 +9,6 @@ const included = [
   "Step-by-step filing instructions for your county",
 ];
 
-const fullServiceIncluded = [
-  "Everything in Self-Service",
-  "We file the appeal on your behalf",
-  "A specialist represents you at your hearing",
-  "You pay nothing unless we reduce your assessment",
-];
-
 export default function ServiceChoices() {
   return (
     <section id="pricing" className="py-16 md:py-24">
@@ -25,11 +18,11 @@ export default function ServiceChoices() {
             Simple, transparent pricing
           </h2>
           <p className="mt-2 text-foreground-muted">
-            Choose the level of support that fits you. No hidden fees.
+            One product, one flat fee. No hidden costs.
           </p>
         </div>
 
-        <div className="mt-10 grid gap-6 md:grid-cols-2">
+        <div className="mt-10 mx-auto max-w-[520px]">
           <Card className="flex flex-col p-7 md:p-8">
             <div className="flex items-center gap-2">
               <Badge tone="info">Self-Service Appeal Package</Badge>
@@ -41,11 +34,13 @@ export default function ServiceChoices() {
               </span>
               <span className="text-4xl font-bold text-foreground">$79</span>
               <span className="text-base font-medium text-foreground-muted">
-                flat fee
+                flat fee, paid to Valuvia
               </span>
             </p>
             <p className="mt-2 text-sm text-foreground-muted">
-              We prepare everything — you file it.
+              We prepare everything — you review, sign, and file it yourself. Your county&apos;s
+              filing fee is separate, paid directly to the county — the exact current amount is
+              shown on your order before you pay.
             </p>
             <ul className="mt-6 flex-1 space-y-3">
               {included.map((item) => (
@@ -57,30 +52,6 @@ export default function ServiceChoices() {
             </ul>
             <Button href="/#start" className="mt-8 w-full">
               Get My Appeal Package — $79
-            </Button>
-          </Card>
-
-          <Card className="flex flex-col border-primary/30 p-7 md:p-8">
-            <Badge tone="neutral">Full-Service Appeal</Badge>
-            <p className="mt-4 text-4xl font-bold text-foreground">
-              Contingency
-              <span className="block text-base font-medium text-foreground-muted">
-                pay only if you save
-              </span>
-            </p>
-            <p className="mt-2 text-sm text-foreground-muted">
-              We handle the entire appeal, start to finish.
-            </p>
-            <ul className="mt-6 flex-1 space-y-3">
-              {fullServiceIncluded.map((item) => (
-                <li key={item} className="flex gap-2 text-sm text-foreground">
-                  <CheckIcon />
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <Button href="/#start" variant="secondary" className="mt-8 w-full">
-              Join the Waitlist
             </Button>
           </Card>
         </div>
