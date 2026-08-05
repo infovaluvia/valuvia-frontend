@@ -26,12 +26,8 @@ export default function ServiceChoices() {
           <Card className="flex flex-col p-7 md:p-8">
             <div className="flex items-center gap-2">
               <Badge tone="info">Self-Service Appeal Package</Badge>
-              <Badge tone="success">Limited-time offer</Badge>
             </div>
             <p className="mt-4 flex items-baseline gap-2">
-              <span className="text-lg font-medium text-foreground-muted line-through">
-                $99
-              </span>
               <span className="text-4xl font-bold text-foreground">$79</span>
               <span className="text-base font-medium text-foreground-muted">
                 flat fee, paid to Valuvia
