@@ -19,6 +19,8 @@ export default function ChatWidget() {
   const [messages, setMessages] = useState<Message[]>([GREETING])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [limitReached, setLimitReached] = useState(false)
+  const [remaining, setRemaining] = useState<number | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -30,7 +32,7 @@ export default function ChatWidget() {
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
     const text = input.trim()
-    if (!text || loading) return
+    if (!text || loading || limitReached) return
 
     const nextMessages = [...messages, { role: 'user', content: text } as Message]
     setMessages(nextMessages)
@@ -46,14 +48,31 @@ export default function ChatWidget() {
         }),
       })
       setMessages([...nextMessages, { role: 'assistant', content: result.reply }])
-    } catch {
-      setMessages([
-        ...nextMessages,
-        {
-          role: 'assistant',
-          content: "Sorry, I'm having trouble responding right now. Please try again shortly.",
-        },
-      ])
+      setRemaining(
+        typeof result.guest_messages_remaining === 'number' ? result.guest_messages_remaining : null,
+      )
+    } catch (err) {
+      const isLimitError = err instanceof Error && err.message.startsWith('API error 403')
+      if (isLimitError) {
+        setLimitReached(true)
+        setRemaining(0)
+        setMessages([
+          ...nextMessages,
+          {
+            role: 'assistant',
+            content:
+              "You've used your 5 free messages as a guest. Create a free account to keep chatting — it only takes a few seconds.",
+          },
+        ])
+      } else {
+        setMessages([
+          ...nextMessages,
+          {
+            role: 'assistant',
+            content: "Sorry, I'm having trouble responding right now. Please try again shortly.",
+          },
+        ])
+      }
     } finally {
       setLoading(false)
     }
@@ -94,21 +113,41 @@ export default function ChatWidget() {
             )}
           </div>
 
-          <form onSubmit={handleSend} className="flex gap-2 border-t border-border p-3">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask a question…"
-              className="h-10 flex-1 rounded-[var(--radius-sm)] border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary-tint"
-            />
-            <button
-              type="submit"
-              disabled={loading || !input.trim()}
-              className="h-10 rounded-[var(--radius-sm)] bg-primary px-4 text-sm font-semibold text-white disabled:opacity-50"
-            >
-              Send
-            </button>
-          </form>
+          {limitReached ? (
+            <div className="border-t border-border p-3">
+              <a
+                href="/account/save?from=chat"
+                className="flex h-10 items-center justify-center rounded-[var(--radius-sm)] bg-primary text-sm font-semibold text-white hover:bg-primary-hover"
+              >
+                Create free account
+              </a>
+            </div>
+          ) : (
+            <>
+              <form onSubmit={handleSend} className="flex gap-2 border-t border-border p-3">
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Ask a question…"
+                  className="h-10 flex-1 rounded-[var(--radius-sm)] border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary-tint"
+                />
+                <button
+                  type="submit"
+                  disabled={loading || !input.trim()}
+                  className="h-10 rounded-[var(--radius-sm)] bg-primary px-4 text-sm font-semibold text-white disabled:opacity-50"
+                >
+                  Send
+                </button>
+              </form>
+              {remaining !== null && remaining <= 2 && (
+                <p className="border-t border-border bg-surface-alt px-3 py-1.5 text-center text-xs text-foreground-muted">
+                  {remaining === 0
+                    ? 'Last free message used.'
+                    : `${remaining} free guest ${remaining === 1 ? 'message' : 'messages'} left`}
+                </p>
+              )}
+            </>
+          )}
         </div>
       )}
 
