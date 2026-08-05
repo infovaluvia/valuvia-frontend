@@ -6,6 +6,7 @@ import { apiFetchServer } from '@/lib/api-server'
 import CheckoutSection from '@/components/orders/CheckoutSection'
 import CompleteDetailsForm from '@/components/orders/CompleteDetailsForm'
 import ApplicationPreview from '@/components/orders/ApplicationPreview'
+import ConditionIntakeForm from '@/components/orders/ConditionIntakeForm'
 
 function formatDollars(cents: number | null | undefined) {
   if (cents == null) return 'Data unavailable'
@@ -155,7 +156,10 @@ export default async function OrderPage({
                     </p>
                   )}
                   {(order.status === 'intake' || order.status === 'comps_review') && (
-                    <ApplicationPreview orderId={order.id} />
+                    <>
+                      <ApplicationPreview orderId={order.id} />
+                      <ConditionIntakeForm orderId={order.id} recommendedValueCents={comps.market_value_cents} />
+                    </>
                   )}
                   <PackagePreviewCard />
                   <CheckoutSection
