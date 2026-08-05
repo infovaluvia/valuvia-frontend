@@ -2,7 +2,6 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import FunnelTracker from "@/components/analytics/FunnelTracker";
 import AppealIntakeHero from "@/components/home/AppealIntakeHero";
-import SampleAnalysis from "@/components/home/SampleAnalysis";
 import ServiceChoices from "@/components/home/ServiceChoices";
 import HowItWorks from "@/components/home/HowItWorks";
 import SamplePackage from "@/components/home/SamplePackage";
@@ -24,12 +23,11 @@ export default async function Home({
       <Navbar />
       <main className="flex-1">
         <AppealIntakeHero initialAddress={address ?? ""} initialCode={code ?? ""} />
-        <SampleAnalysis />
-        <ServiceChoices />
         <HowItWorks />
         <SamplePackage />
         <TrustSection />
         <CountyCoverage />
+        <ServiceChoices />
         <FAQ />
         <FinalCTA />
       </main>
