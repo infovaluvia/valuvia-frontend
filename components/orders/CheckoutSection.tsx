@@ -130,7 +130,11 @@ export default function CheckoutSection({
     return (
       <Card className="mt-8 p-6 md:p-8">
         <h2 className="text-lg font-semibold text-foreground">Your Appeal Package</h2>
-        <p className="mt-1 text-sm text-foreground-muted">
+        <p className="mt-3 rounded-[var(--radius-sm)] bg-surface-alt px-4 py-3 text-sm font-medium text-foreground">
+          Not filed by Valuvia — you review, sign, and submit this yourself. See your Government
+          Filing Package below for the submission checklist and deadline.
+        </p>
+        <p className="mt-3 text-sm text-foreground-muted">
           We&apos;ve also emailed you these links (with your receipt). Download now, or come back to
           this page any time.
         </p>
