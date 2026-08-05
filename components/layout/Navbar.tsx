@@ -79,8 +79,52 @@ export default async function Navbar() {
           <Button href="/#start" size="md">
             Check My Property
           </Button>
+          {/* <details>/<summary> gets open/close, Enter/Space toggling, and
+              click-outside-to-close for free from the browser -- no custom
+              JS needed for a menu this simple. Below md, the links above
+              are hidden entirely with no other way to reach them, so this
+              is the only path to How It Works / Pricing / Resources / Sign
+              In on a phone-width screen. */}
+          <details className="relative md:hidden">
+            <summary
+              aria-label="Menu"
+              className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-[var(--radius-sm)] text-foreground-muted hover:text-foreground [&::-webkit-details-marker]:hidden"
+            >
+              <MenuIcon />
+            </summary>
+            <nav className="absolute right-0 top-[calc(100%+0.5rem)] flex w-48 flex-col gap-1 rounded-[var(--radius-md)] border border-border bg-surface p-2 shadow-lg">
+              {links.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className="rounded-[var(--radius-sm)] px-3 py-2 text-sm font-medium text-foreground-muted hover:bg-surface-alt hover:text-foreground"
+                >
+                  {l.label}
+                </Link>
+              ))}
+              <Link
+                href="/login"
+                className="rounded-[var(--radius-sm)] px-3 py-2 text-sm font-medium text-foreground-muted hover:bg-surface-alt hover:text-foreground"
+              >
+                Sign In
+              </Link>
+            </nav>
+          </details>
         </div>
       </Container>
     </header>
+  );
+}
+
+function MenuIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+      <path
+        d="M4 7h16M4 12h16M4 17h16"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
