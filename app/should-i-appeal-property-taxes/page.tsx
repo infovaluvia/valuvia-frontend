@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import FunnelTracker from "@/components/analytics/FunnelTracker";
 import QuickAppealCheck from "@/components/landing/QuickAppealCheck";
 import AppealCriteriaContent from "@/components/landing/AppealCriteriaContent";
 import LandingFAQ from "@/components/landing/LandingFAQ";
@@ -25,6 +26,7 @@ export const metadata: Metadata = {
 export default function ShouldIAppealPage() {
   return (
     <>
+      <FunnelTracker event="landing_viewed" properties={{ page: "should_i_appeal" }} />
       <Navbar />
       <main className="flex-1">
         <section className="border-b border-border bg-background">

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { track } from '@vercel/analytics'
 import { apiFetch, apiFetchUpload } from '@/lib/api'
 import { loadGooglePlaces, parsePlaceAddressComponents, type ParsedAddress } from '@/lib/google-places'
 import Card from '@/components/ui/Card'
@@ -68,6 +69,12 @@ export default function IntakeForm({
   const [loading, setLoading] = useState(false)
 
   const assessorLookupUrl = county ? COUNTY_ASSESSOR_LINKS[countyToSlug(county)] : undefined
+
+  // Fired once, the moment this form is actually reached -- the funnel
+  // step between "viewed the landing page" and "submitted an address."
+  useEffect(() => {
+    track('screening_started')
+  }, [])
 
   // Load the Places library once.
   useEffect(() => {
@@ -270,6 +277,11 @@ export default function IntakeForm({
           property_type: propertyType || undefined,
         }),
       })
+
+      // No address/APN/etc. in the properties -- just the fact that this
+      // funnel step happened (V1 launch spec TASK-AN-001: never send a
+      // full address or other sensitive value to general analytics).
+      track('address_submitted')
 
       router.push(`/orders/${order.id}`)
     } catch (err) {
