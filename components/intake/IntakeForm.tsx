@@ -152,23 +152,12 @@ export default function IntakeForm({
       setLeadCode(normalized)
       setCodeApplied(true)
 
-      // A mailer/QR recipient's whole ask is "let me buy" — everything
-      // needed to create the order is already on their letter, so skip
-      // the review step and go straight to the order page where the buy
-      // button is the very next thing they see. Only auto-submit if the
-      // letter actually had an assessed value; otherwise fall back to
-      // showing the prefilled-but-editable form like any other visitor.
-      if (leadAssessedValue) {
-        await submitOrder({
-          situsAddress: lead.situs_address,
-          assessedValue: leadAssessedValue,
-          leadCode: normalized,
-          county: lead.county || '',
-          state: lead.state || '',
-          apn: lead.apn || '',
-          parsedAddress: parsed,
-        })
-      }
+      // V1 launch spec §12 (TASK-FOUND-002): "require the owner to
+      // confirm property and assessment facts" -- this used to
+      // auto-submit the order immediately after a successful code
+      // lookup, with no owner-facing review step at all. Now it only
+      // prefills the form; the owner reviews the data below and submits
+      // it themselves via the same button every other visitor uses.
     } catch {
       setCodeError("We couldn't find that code — double check your letter, or just fill in the form below.")
     } finally {
@@ -220,33 +209,15 @@ export default function IntakeForm({
     }
   }
 
-  // Overrides let lookupCode submit with freshly-fetched lead data
-  // immediately, without waiting on React state updates to land first.
-  async function submitOrder(overrides?: {
-    situsAddress?: string
-    assessedValue?: string
-    leadCode?: string | null
-    county?: string
-    state?: string
-    apn?: string
-    parsedAddress?: ParsedAddress | null
-  }) {
+  async function submitOrder() {
     setError(null)
 
-    const finalSitusAddress = overrides?.situsAddress ?? situsAddress
-    const finalAssessedValue = overrides?.assessedValue ?? assessedValue
-    const finalLeadCode = overrides?.leadCode ?? leadCode
-    const finalCounty = overrides?.county ?? county
-    const finalState = overrides?.state ?? state
-    const finalApn = overrides?.apn ?? apn
-    const finalParsedAddress = overrides?.parsedAddress ?? parsedAddress
-
-    if (!finalSitusAddress.trim()) {
+    if (!situsAddress.trim()) {
       setError('Please enter your property address.')
       return
     }
-    const assessedDollars = parseFloat(finalAssessedValue)
-    if (!finalAssessedValue.trim() || Number.isNaN(assessedDollars) || assessedDollars <= 0) {
+    const assessedDollars = parseFloat(assessedValue)
+    if (!assessedValue.trim() || Number.isNaN(assessedDollars) || assessedDollars <= 0) {
       setError('Please enter your assessed value — you can find it on your property tax bill or assessment notice.')
       return
     }
@@ -258,11 +229,11 @@ export default function IntakeForm({
       const property = await apiFetch('/api/v1/properties', {
         method: 'POST',
         body: JSON.stringify({
-          situs_address: finalSitusAddress,
-          apn: finalApn || undefined,
-          county: finalCounty || undefined,
-          state: finalState || undefined,
-          parsed_address_json: finalParsedAddress ?? undefined,
+          situs_address: situsAddress,
+          apn: apn || undefined,
+          county: county || undefined,
+          state: state || undefined,
+          parsed_address_json: parsedAddress ?? undefined,
         }),
       })
 
@@ -270,8 +241,8 @@ export default function IntakeForm({
         method: 'POST',
         body: JSON.stringify({
           property_id: property.id,
-          apn: finalApn || undefined,
-          lead_code: finalLeadCode || undefined,
+          apn: apn || undefined,
+          lead_code: leadCode || undefined,
           assessed_value_cents: assessedCents,
           owner_name: ownerName || undefined,
           owner_email: ownerEmail || undefined,
