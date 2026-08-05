@@ -39,6 +39,8 @@ export default function CheckoutSection({
   const [showPostPaymentForm, setShowPostPaymentForm] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [checkingReview, setCheckingReview] = useState(false)
+  const [stillUnderReview, setStillUnderReview] = useState(false)
 
   // Only owner_name/owner_email can still be missing by the time this
   // renders (assessed value is required back on the intake page) — the
@@ -76,6 +78,24 @@ export default function CheckoutSection({
     loadOrShowPostPayment()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  async function handleCheckForDocuments() {
+    setCheckingReview(true)
+    setStillUnderReview(false)
+    try {
+      const docs = await apiFetch(`/api/v1/orders/${orderId}/documents`)
+      if (docs.length > 0) {
+        setDocuments(docs)
+        setStatus('documents_generated')
+      } else {
+        setStillUnderReview(true)
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to check on your package')
+    } finally {
+      setCheckingReview(false)
+    }
+  }
 
   async function handlePay() {
     setError(null)
@@ -164,11 +184,35 @@ export default function CheckoutSection({
       <PostPaymentDetailsForm
         orderId={orderId}
         recommendedValueCents={recommendedValueCents}
-        onGenerated={(docs) => {
-          setStatus('documents_generated')
-          setDocuments(docs)
+        onSubmittedForReview={() => {
+          setShowPostPaymentForm(false)
+          setStatus('qa_pending')
         }}
       />
+    )
+  }
+
+  if (status === 'qa_pending') {
+    return (
+      <Card className="mt-8 p-6 text-center md:p-8">
+        <h2 className="text-lg font-semibold text-foreground">Your Package Is Being Reviewed</h2>
+        <p className="mt-2 text-sm text-foreground-muted">
+          Your package has been generated and a member of our team is reviewing it for accuracy
+          before it&apos;s released to you. We&apos;ll email you as soon as it&apos;s ready — this
+          page will also show it here.
+        </p>
+        {stillUnderReview && (
+          <p className="mt-3 text-sm text-foreground-muted">Still under review — check back soon.</p>
+        )}
+        {error && (
+          <p className="mt-3 rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
+            {error}
+          </p>
+        )}
+        <Button onClick={handleCheckForDocuments} disabled={checkingReview} className="mt-5 w-full">
+          {checkingReview ? 'Checking…' : 'Check for My Package'}
+        </Button>
+      </Card>
     )
   }
 
