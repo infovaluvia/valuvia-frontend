@@ -25,12 +25,16 @@ export default function CheckoutSection({
   checkoutResult,
   missingFields,
   recommendedValueCents,
+  filingFeeCents,
+  countyName,
 }: {
   orderId: string
   initialStatus: string
   checkoutResult?: string // "success" | "cancelled" | undefined
   missingFields: string[]
   recommendedValueCents?: number
+  filingFeeCents?: number | null
+  countyName?: string | null
 }) {
   const router = useRouter()
 
@@ -41,6 +45,12 @@ export default function CheckoutSection({
   const [error, setError] = useState<string | null>(null)
   const [checkingReview, setCheckingReview] = useState(false)
   const [stillUnderReview, setStillUnderReview] = useState(false)
+  const [acknowledged, setAcknowledged] = useState(false)
+
+  const filingFeeLabel =
+    filingFeeCents != null
+      ? (filingFeeCents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+      : 'a separate amount'
 
   // Only owner_name/owner_email can still be missing by the time this
   // renders (assessed value is required back on the intake page) — the
@@ -98,10 +108,17 @@ export default function CheckoutSection({
   }
 
   async function handlePay() {
+    if (!acknowledged) {
+      setError('Please confirm you understand the pricing and filing terms below before continuing.')
+      return
+    }
     setError(null)
     setLoading(true)
     try {
-      const result = await apiFetch(`/api/v1/orders/${orderId}/checkout`, { method: 'POST' })
+      const result = await apiFetch(`/api/v1/orders/${orderId}/checkout`, {
+        method: 'POST',
+        body: JSON.stringify({ acknowledged: true }),
+      })
       window.location.assign(result.checkout_url)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not start checkout')
@@ -116,6 +133,23 @@ export default function CheckoutSection({
     }
     handlePay()
   }
+
+  const acknowledgementCheckbox = (
+    <label className="mb-4 flex items-start gap-2.5 text-sm text-foreground-muted">
+      <input
+        type="checkbox"
+        checked={acknowledged}
+        onChange={(e) => setAcknowledged(e.target.checked)}
+        className="mt-0.5 flex-shrink-0"
+      />
+      <span>
+        I understand the $79 fee is paid to Valuvia only. {countyName || 'My county'}&apos;s
+        filing fee ({filingFeeLabel}) is separate and paid directly to the county. Valuvia does
+        not file, sign, or submit anything on my behalf — I am responsible for reviewing,
+        signing, and filing my own appeal.
+      </span>
+    </label>
+  )
 
   async function handleCompletionSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -219,10 +253,11 @@ export default function CheckoutSection({
   if (error) {
     return (
       <div className="mt-8">
-        <p className="rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
+        <p className="mb-4 rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
           {error}
         </p>
-        <Button onClick={handleBuyClick} className="mt-4 w-full">
+        {acknowledgementCheckbox}
+        <Button onClick={handleBuyClick} className="w-full">
           Try again
         </Button>
       </div>
@@ -232,10 +267,11 @@ export default function CheckoutSection({
   if (checkoutResult === 'cancelled' && !showCompletionForm) {
     return (
       <Card className="mt-8 p-6 text-center md:p-8">
-        <p className="text-sm text-foreground-muted">
+        <p className="mb-4 text-sm text-foreground-muted">
           Checkout was cancelled — no charge was made.
         </p>
-        <Button onClick={handleBuyClick} className="mt-4 w-full">
+        {acknowledgementCheckbox}
+        <Button onClick={handleBuyClick} className="w-full">
           Try again — I Am Ready to Buy ($79)
         </Button>
       </Card>
@@ -269,6 +305,7 @@ export default function CheckoutSection({
                 </div>
               )
             })}
+            {acknowledgementCheckbox}
             <Button type="submit" size="lg" className="w-full">
               Continue to Payment
             </Button>
@@ -279,6 +316,7 @@ export default function CheckoutSection({
 
     return (
       <div className="mt-8">
+        {acknowledgementCheckbox}
         <Button onClick={handleBuyClick} size="lg" className="w-full">
           I Am Ready to Buy — $79
         </Button>
