@@ -20,12 +20,48 @@ export default function ChatWidget() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const toggleButtonRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     if (listRef.current) {
       listRef.current.scrollTop = listRef.current.scrollHeight
     }
   }, [messages, loading])
+
+  // Move focus into the panel on open, and back to the toggle button on
+  // close, so keyboard/screen-reader users aren't dropped silently. Skips
+  // the initial mount (open starts false) so page load doesn't steal focus.
+  const wasOpen = useRef(false)
+  useEffect(() => {
+    if (open) {
+      inputRef.current?.focus()
+    } else if (wasOpen.current) {
+      toggleButtonRef.current?.focus()
+    }
+    wasOpen.current = open
+  }, [open])
+
+  // Escape-to-close and click-outside-to-close.
+  useEffect(() => {
+    if (!open) return
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    function handleClickOutside(e: MouseEvent) {
+      const target = e.target as Node
+      if (panelRef.current?.contains(target)) return
+      if (toggleButtonRef.current?.contains(target)) return
+      setOpen(false)
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [open])
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
@@ -62,7 +98,13 @@ export default function ChatWidget() {
   return (
     <div className="fixed bottom-5 right-5 z-50">
       {open && (
-        <div className="mb-3 flex h-[70vh] max-h-[480px] w-[calc(100vw-2.5rem)] max-w-[340px] flex-col overflow-hidden rounded-[var(--radius-lg)] border border-border bg-surface shadow-xl sm:max-w-[380px]">
+        <div
+          ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Valuvia Assistant chat"
+          className="mb-3 flex h-[70vh] max-h-[480px] w-[calc(100vw-2.5rem)] max-w-[340px] flex-col overflow-hidden rounded-[var(--radius-lg)] border border-border bg-surface shadow-xl sm:max-w-[380px]"
+        >
           <div className="flex items-center justify-between border-b border-border bg-primary px-4 py-3">
             <p className="text-sm font-semibold text-white">Valuvia Assistant</p>
             <button
@@ -96,9 +138,11 @@ export default function ChatWidget() {
 
           <form onSubmit={handleSend} className="flex gap-2 border-t border-border p-3">
             <input
+              ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask a question…"
+              aria-label="Message"
               className="h-10 flex-1 rounded-[var(--radius-sm)] border border-border bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary-tint"
             />
             <button
@@ -113,8 +157,10 @@ export default function ChatWidget() {
       )}
 
       <button
+        ref={toggleButtonRef}
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? 'Close chat' : 'Open chat'}
+        aria-expanded={open}
         className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform hover:scale-105"
       >
         {open ? <CloseIcon /> : <ChatIcon />}

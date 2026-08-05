@@ -28,7 +28,7 @@ export default function SampleAnalysis() {
             <Badge tone="success">Appeal opportunity</Badge>
           </div>
 
-          <div className="mt-6 grid grid-cols-3 gap-4 border-t border-border pt-6">
+          <div className="mt-6 grid grid-cols-1 gap-4 border-t border-border pt-6 sm:grid-cols-3">
             <div>
               <p className="text-xs text-foreground-muted">Assessed value</p>
               <p className="mt-1 text-xl font-bold text-foreground">

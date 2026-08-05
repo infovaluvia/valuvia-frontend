@@ -116,7 +116,7 @@ export default async function OrderPage({
               {jurisdiction && <ProcessCard jurisdiction={jurisdiction} formatDollars={formatDollars} />}
 
               <Card className="mt-6 p-6 md:p-8">
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <Stat label="Assessed value" value={formatDollars(order.assessed_value_cents)} />
                   <Stat
                     label="Estimated market value"
@@ -330,32 +330,38 @@ function CompsSection({
           </p>
         )
       )}
-      <Card className="mt-4 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[560px] text-sm">
-            <thead>
-              <tr className="border-b border-border bg-surface-alt">
-                <Th>Address</Th>
-                <Th>Sale Date</Th>
-                <Th>Price</Th>
-                <Th>Sqft</Th>
-                <Th>$/Sqft</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {comps.comps.map((c, i) => (
-                <tr key={i} className="border-b border-border last:border-0">
-                  <Td>{c.address}</Td>
-                  <Td>{c.sale_date}</Td>
-                  <Td>{formatDollars(c.price * 100)}</Td>
-                  <Td>{c.sqft}</Td>
-                  <Td>{formatDollars(c.price_per_sqft * 100)}</Td>
+      {comps.comps.length === 0 ? (
+        <Card className="mt-4 p-6 text-center text-sm text-foreground-muted">
+          No comparable sales were found for this property yet.
+        </Card>
+      ) : (
+        <Card className="mt-4 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[560px] text-sm">
+              <thead>
+                <tr className="border-b border-border bg-surface-alt">
+                  <Th>Address</Th>
+                  <Th>Sale Date</Th>
+                  <Th>Price</Th>
+                  <Th>Sqft</Th>
+                  <Th>$/Sqft</Th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+              </thead>
+              <tbody>
+                {comps.comps.map((c, i) => (
+                  <tr key={i} className="border-b border-border last:border-0">
+                    <Td>{c.address}</Td>
+                    <Td>{c.sale_date}</Td>
+                    <Td>{formatDollars(c.price * 100)}</Td>
+                    <Td>{c.sqft}</Td>
+                    <Td>{formatDollars(c.price_per_sqft * 100)}</Td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
     </>
   )
 }
