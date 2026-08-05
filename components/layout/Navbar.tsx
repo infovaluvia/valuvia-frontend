@@ -51,7 +51,7 @@ export default async function Navbar() {
               Valuvia
             </span>
             <span className="mt-1.5 text-[0.78rem] font-semibold tracking-wider text-foreground-muted">
-              AI-POWERED PROPERTY TAX APPEALS
+              SANTA CLARA COUNTY ASSESSMENT REVIEW
             </span>
           </span>
         </Link>

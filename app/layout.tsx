@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Valuvia — Lower Your Property Tax Bill",
+  title: "Valuvia — Santa Clara County Property Assessment Review",
   description:
-    "Check your property's assessment against recent comparable sales and file a professionally prepared tax appeal in minutes.",
+    "Independent preliminary review of your Santa Clara County property assessment, based on recent comparable sales. Free to check; owner reviews, signs, and files. Estimates only, not guarantees.",
 };
 
 export default function RootLayout({
