@@ -12,30 +12,32 @@ export default function AppealIntakeHero({
       <div className="mx-auto grid max-w-[1180px] gap-12 px-6 py-16 md:grid-cols-[1fr_1fr] md:items-start md:gap-10 md:px-8 md:py-20">
         <div>
           <span className="inline-flex items-center rounded-full bg-primary-tint px-4 py-1.5 text-sm font-semibold text-primary">
-            Now supporting appeals nationwide
+            Now serving Santa Clara County, CA
           </span>
 
           <h1 className="mt-6 text-[2.1rem] leading-[1.1] font-bold text-foreground md:text-[2.75rem]">
-            Your home may be <span className="text-primary">over-assessed</span>. Find out in
-            minutes.
+            Think Your 2026 Santa Clara County Property Assessment May Be Too High?
           </h1>
 
           <p className="mt-5 max-w-[480px] text-lg text-foreground-muted">
-            Enter your address and assessed value — or upload your tax bill — for a free
-            preliminary review and a recommendation on whether an appeal is worth pursuing.
+            Get an independent preliminary review before deciding whether an assessment appeal is
+            worth pursuing.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-foreground-muted">
             <span className="flex items-center gap-1.5">
-              <CheckCircleIcon /> Free to check
+              <CheckCircleIcon /> No payment required for the initial screening
             </span>
             <span className="flex items-center gap-1.5">
-              <ClockIcon /> Takes about 2 minutes
+              <CheckCircleIcon /> Owner files directly
             </span>
             <span className="flex items-center gap-1.5">
-              <CheckCircleIcon /> No account required
+              <CheckCircleIcon /> No government affiliation
             </span>
           </div>
+          <p className="mt-2 text-xs text-foreground-muted">
+            Results are estimates, not guarantees.
+          </p>
 
           <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-3">
             <TrustPoint icon={<ShieldIcon />} title="No upfront cost" subtitle="Pay only for what you order" />
@@ -44,19 +46,7 @@ export default function AppealIntakeHero({
           </div>
         </div>
 
-        <div className="relative">
-          <div className="pointer-events-none absolute -top-6 right-4 z-10 hidden max-w-[190px] rotate-2 rounded-[var(--radius-md)] border border-border bg-surface p-3.5 shadow-md md:flex md:items-start md:gap-2.5">
-            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-primary-tint text-primary">
-              <SparkleIcon />
-            </span>
-            <div>
-              <p className="text-xs font-semibold text-foreground">AI-Powered Analysis</p>
-              <p className="mt-0.5 text-[0.7rem] leading-snug text-foreground-muted">
-                We read your documents and compare recent sales for you.
-              </p>
-            </div>
-          </div>
-
+        <div>
           <IntakeForm initialAddress={initialAddress} initialCode={initialCode} />
         </div>
       </div>
@@ -95,15 +85,6 @@ function CheckCircleIcon() {
   );
 }
 
-function ClockIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 text-primary">
-      <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M10 5.5V10l3 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function ShieldIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" className="h-4.5 w-4.5">
@@ -117,14 +98,6 @@ function LockIcon() {
     <svg viewBox="0 0 24 24" fill="none" className="h-4.5 w-4.5">
       <rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" strokeWidth="1.6" />
       <path d="M8 10.5V7.5a4 4 0 018 0v3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function SparkleIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-4.5 w-4.5">
-      <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
     </svg>
   );
 }
