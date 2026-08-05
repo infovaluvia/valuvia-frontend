@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { track } from '@vercel/analytics'
 import { apiFetch } from '@/lib/api'
 
 interface Message {
@@ -158,7 +159,10 @@ export default function ChatWidget() {
 
       <button
         ref={toggleButtonRef}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          if (!open) track('support_opened')
+          setOpen((v) => !v)
+        }}
         aria-label={open ? 'Close chat' : 'Open chat'}
         aria-expanded={open}
         className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform hover:scale-105"

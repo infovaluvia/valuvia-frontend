@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { track } from '@vercel/analytics'
 import { apiFetch, apiFetchUpload } from '@/lib/api'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
@@ -35,6 +36,10 @@ export default function ConditionIntakeForm({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    track('condition_step_started')
+  }, [])
 
   function addObservation() {
     setObservations((obs) => [...obs, { item: '', observation: '' }])
@@ -86,6 +91,7 @@ export default function ConditionIntakeForm({
       }
 
       setSaved(true)
+      track('condition_step_completed')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong saving this. Please try again.')
     } finally {
