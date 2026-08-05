@@ -6,6 +6,7 @@ import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import MoneyInput from '@/components/ui/MoneyInput'
 import Button from '@/components/ui/Button'
+import Field from '@/components/ui/Field'
 
 const FIELD_META: Record<string, { label: string; type: string }> = {
   assessed_value_cents: { label: 'Assessed value', type: 'money' },
@@ -73,11 +74,7 @@ export default function CompleteDetailsForm({
           const meta = FIELD_META[field]
           if (!meta) return null
           return (
-            <div key={field}>
-              <label className="mb-1.5 block text-sm font-medium text-foreground">
-                {meta.label}
-                <span className="ml-1 text-error">*</span>
-              </label>
+            <Field key={field} label={meta.label} required>
               {meta.type === 'money' ? (
                 <MoneyInput
                   value={values[field] ?? ''}
@@ -92,12 +89,12 @@ export default function CompleteDetailsForm({
                   required
                 />
               )}
-            </div>
+            </Field>
           )
         })}
 
         {error && (
-          <p className="rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
+          <p role="alert" className="rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
             {error}
           </p>
         )}

@@ -25,10 +25,16 @@ export default function MoneyInput({
   value,
   onChange,
   required,
+  id,
+  'aria-describedby': ariaDescribedBy,
+  'aria-invalid': ariaInvalid,
 }: {
   value: string
   onChange: (value: string) => void
   required?: boolean
+  id?: string
+  'aria-describedby'?: string
+  'aria-invalid'?: boolean
 }) {
   // Reformatting with commas on every keystroke (while the field is
   // focused) fights the cursor position and, combined with a stale
@@ -45,6 +51,9 @@ export default function MoneyInput({
       <Input
         type="text"
         inputMode="decimal"
+        id={id}
+        aria-describedby={ariaDescribedBy}
+        aria-invalid={ariaInvalid}
         value={focused ? value : formatDisplay(value)}
         onChange={(e) => onChange(sanitizeMoneyString(e.target.value))}
         onFocus={() => setFocused(true)}

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
+import Field from '@/components/ui/Field'
 
 // Core component: upgrades the current anonymous account into a permanent
 // account (sets email + password). Since the user id doesn't change,
@@ -65,18 +66,16 @@ export default function CreateAccountForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-foreground">Email</label>
+      <Field label="Email" required>
         <Input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-      </div>
+      </Field>
 
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-foreground">Password</label>
+      <Field label="Password" required hint="Min 6 characters">
         <Input
           type="password"
           value={password}
@@ -85,15 +84,15 @@ export default function CreateAccountForm() {
           minLength={6}
           placeholder="Min 6 characters"
         />
-      </div>
+      </Field>
 
       {error && (
-        <p className="rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
+        <p role="alert" className="rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
           {error}
         </p>
       )}
       {message && (
-        <p className="rounded-[var(--radius-sm)] bg-success-tint px-4 py-3 text-sm text-success">
+        <p role="status" className="rounded-[var(--radius-sm)] bg-success-tint px-4 py-3 text-sm text-success">
           {message}
         </p>
       )}

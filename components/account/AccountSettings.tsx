@@ -7,6 +7,7 @@ import { apiFetch } from '@/lib/api'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
+import Field from '@/components/ui/Field'
 import type { User } from '@supabase/supabase-js'
 
 interface Profile {
@@ -106,15 +107,13 @@ export default function AccountSettings() {
       <Card className="p-6 md:p-8">
         <h2 className="text-lg font-semibold text-foreground">Profile</h2>
         <form onSubmit={handleProfileSave} className="mt-5 space-y-4">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground">Full name</label>
+          <Field label="Full name">
             <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground">Phone</label>
+          </Field>
+          <Field label="Phone">
             <Input value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" />
-          </div>
-          {profileMessage && <p className="text-sm text-foreground-muted">{profileMessage}</p>}
+          </Field>
+          {profileMessage && <p role="status" className="text-sm text-foreground-muted">{profileMessage}</p>}
           <Button type="submit" disabled={profileSaving}>
             {profileSaving ? 'Saving…' : 'Save Profile'}
           </Button>
@@ -136,28 +135,21 @@ export default function AccountSettings() {
           </div>
         ) : (
           <div className="mt-5 space-y-5">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-foreground">Email</label>
+            <Field label="Email">
               <Input value={profile?.email ?? user?.email ?? ''} disabled />
-            </div>
+            </Field>
 
             <form onSubmit={handlePasswordSave} className="space-y-3">
-              <label className="mb-1.5 block text-sm font-medium text-foreground">
-                New password
-              </label>
-              <Input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                minLength={6}
-                placeholder="Min 6 characters"
-              />
-              {passwordError && (
-                <p className="rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
-                  {passwordError}
-                </p>
-              )}
-              {passwordMessage && <p className="text-sm text-foreground-muted">{passwordMessage}</p>}
+              <Field label="New password" hint="Min 6 characters" error={passwordError ?? undefined}>
+                <Input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  minLength={6}
+                  placeholder="Min 6 characters"
+                />
+              </Field>
+              {passwordMessage && <p role="status" className="text-sm text-foreground-muted">{passwordMessage}</p>}
               <Button type="submit" disabled={passwordSaving || newPassword.length < 6}>
                 {passwordSaving ? 'Updating…' : 'Update Password'}
               </Button>

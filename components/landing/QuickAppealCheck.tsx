@@ -7,6 +7,7 @@ import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import MoneyInput from '@/components/ui/MoneyInput'
 import Button from '@/components/ui/Button'
+import Field from '@/components/ui/Field'
 
 type Verdict = 'not_supported' | 'out_of_window' | 'flagged_overassessed' | 'possible_candidate'
 
@@ -89,12 +90,10 @@ export default function QuickAppealCheck() {
 
       <form onSubmit={handleSubmit} className="mt-5 space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground">County</label>
+          <Field label="County" required>
             <Input type="text" value={county} onChange={(e) => setCounty(e.target.value)} placeholder="Santa Clara" />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground">State</label>
+          </Field>
+          <Field label="State" required>
             <Input
               type="text"
               value={state}
@@ -102,22 +101,18 @@ export default function QuickAppealCheck() {
               maxLength={2}
               placeholder="CA"
             />
-          </div>
+          </Field>
         </div>
 
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-foreground">Current assessed value</label>
+        <Field label="Current assessed value" required>
           <MoneyInput value={assessedValue} onChange={setAssessedValue} />
-        </div>
+        </Field>
 
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-foreground">
-            Prior year assessed value (optional)
-          </label>
+        <Field label="Prior year assessed value (optional)">
           <MoneyInput value={priorYearValue} onChange={setPriorYearValue} />
-        </div>
+        </Field>
 
-        {error && <p className="text-sm text-error">{error}</p>}
+        {error && <p role="alert" className="text-sm text-error">{error}</p>}
 
         <Button type="submit" disabled={loading} className="w-full">
           {loading ? 'Checking…' : 'Should I appeal?'}
@@ -126,6 +121,7 @@ export default function QuickAppealCheck() {
 
       {result && (
         <div
+          role="status"
           className={`mt-5 rounded-[var(--radius-sm)] border p-4 ${
             VERDICT_COPY[result.verdict].tone === 'good'
               ? 'border-accent-green/30 bg-accent-green/10'
