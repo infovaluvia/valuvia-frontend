@@ -45,7 +45,7 @@ export default function AppealIntakeHero({
         </div>
 
         <div className="relative">
-          <div className="absolute -top-6 right-4 z-10 hidden max-w-[190px] rotate-2 rounded-[var(--radius-md)] border border-border bg-surface p-3.5 shadow-md md:flex md:items-start md:gap-2.5">
+          <div className="pointer-events-none absolute -top-6 right-4 z-10 hidden max-w-[190px] rotate-2 rounded-[var(--radius-md)] border border-border bg-surface p-3.5 shadow-md md:flex md:items-start md:gap-2.5">
             <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-primary-tint text-primary">
               <SparkleIcon />
             </span>
