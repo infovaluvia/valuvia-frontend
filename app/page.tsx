@@ -1,5 +1,6 @@
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import FunnelTracker from "@/components/analytics/FunnelTracker";
 import AppealIntakeHero from "@/components/home/AppealIntakeHero";
 import SampleAnalysis from "@/components/home/SampleAnalysis";
 import ServiceChoices from "@/components/home/ServiceChoices";
@@ -19,6 +20,7 @@ export default async function Home({
 
   return (
     <>
+      <FunnelTracker event="landing_viewed" properties={{ page: "home" }} />
       <Navbar />
       <main className="flex-1">
         <AppealIntakeHero initialAddress={address ?? ""} initialCode={code ?? ""} />
