@@ -2,6 +2,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
+import Button from "@/components/ui/Button";
 import { apiFetchServer } from "@/lib/api-server";
 
 export const metadata = {
@@ -95,7 +96,12 @@ export default async function AdminPage() {
       <Navbar />
       <main className="flex-1 py-12 md:py-16">
         <div className="mx-auto max-w-[1180px] px-6 md:px-8">
-          <h1 className="text-2xl font-bold text-foreground md:text-3xl">Admin</h1>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h1 className="text-2xl font-bold text-foreground md:text-3xl">Admin</h1>
+            <Button href="/admin/qa" variant="secondary">
+              QA Review Queue
+            </Button>
+          </div>
 
           {error ? (
             <Card className="mt-6 p-6 text-sm text-foreground-muted">
