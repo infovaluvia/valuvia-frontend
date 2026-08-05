@@ -15,9 +15,17 @@ const columns = [
   {
     title: "Company",
     links: [
+      { href: "/about", label: "About" },
+      { href: "/contact", label: "Contact" },
+      { href: "/login", label: "Sign In" },
+    ],
+  },
+  {
+    title: "Resources",
+    links: [
+      { href: "/methodology", label: "Methodology" },
       { href: "/#faq", label: "FAQ" },
       { href: "/#trust", label: "Trust & Privacy" },
-      { href: "/login", label: "Sign In" },
     ],
   },
   {
@@ -27,6 +35,7 @@ const columns = [
       { href: "/legal/privacy", label: "Privacy Policy" },
       { href: "/legal/disclaimer", label: "Disclaimer" },
       { href: "/legal/refund", label: "Refund Policy" },
+      { href: "/accessibility", label: "Accessibility" },
     ],
   },
 ];
@@ -35,7 +44,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-border bg-surface-alt">
       <Container className="py-14">
-        <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-10 md:grid-cols-5">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2">
               <Image src="/logo.png" alt="Valuvia" width={24} height={24} />
