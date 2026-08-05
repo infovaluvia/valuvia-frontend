@@ -42,6 +42,12 @@ interface Screening {
   disclaimer: string | null
 }
 
+interface Recommendation {
+  recommendation: 'appeal_recommended' | 'manual_review_required' | 'not_recommended'
+  reason_codes: string[]
+  evidence_strength: string
+}
+
 interface OrderData {
   order: {
     id: string
@@ -49,6 +55,7 @@ interface OrderData {
     assessed_value_cents: number | null
     requested_value_cents: number
     estimated_savings_cents: number
+    recommendation_json: Recommendation | null
   }
   comps: {
     source: string
@@ -131,8 +138,22 @@ export default async function OrderPage({
                 <Card className="mt-8 p-6 text-center text-sm text-foreground-muted md:p-8">
                   We&apos;ll email you as soon as we support appeals in your county.
                 </Card>
+              ) : order.recommendation_json?.recommendation === 'not_recommended' ? (
+                <Card className="mt-8 p-6 text-center text-sm text-foreground-muted md:p-8">
+                  Based on available market evidence, an appeal doesn&apos;t currently appear
+                  economically reasonable for this property, so we&apos;re not able to sell the
+                  appeal package for it. If your assessed value or comparable sales change, come
+                  back and we&apos;ll re-check.
+                </Card>
               ) : (
                 <>
+                  {order.recommendation_json?.recommendation === 'manual_review_required' && (
+                    <p className="mt-6 rounded-[var(--radius-sm)] bg-warning-tint px-4 py-3 text-sm text-warning">
+                      This case needs a closer look before we can confirm an appeal is worth
+                      pursuing — you can still purchase the package, and our team will review your
+                      evidence before delivering it.
+                    </p>
+                  )}
                   {(order.status === 'intake' || order.status === 'comps_review') && (
                     <ApplicationPreview orderId={order.id} />
                   )}
