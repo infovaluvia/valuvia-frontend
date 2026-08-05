@@ -7,12 +7,6 @@ import Input from '@/components/ui/Input'
 import MoneyInput from '@/components/ui/MoneyInput'
 import Button from '@/components/ui/Button'
 
-interface DocumentItem {
-  kind: string
-  label: string
-  url: string
-}
-
 interface ConditionObservation {
   item: string
   observation: string
@@ -22,14 +16,19 @@ interface ConditionObservation {
 // optional. The goal is a single page: confirm (or skip) an opinion of
 // value, note any condition issues, attach photos, then generate. None
 // of this blocks the purchase itself, which already happened.
+//
+// Generating does NOT deliver the package immediately — the backend
+// requires a human QA reviewer to approve it first (V1 launch spec
+// TASK-QA-001), so this only tells the parent "submitted for review,"
+// not "here are your documents."
 export default function PostPaymentDetailsForm({
   orderId,
   recommendedValueCents,
-  onGenerated,
+  onSubmittedForReview,
 }: {
   orderId: string
   recommendedValueCents?: number
-  onGenerated: (documents: DocumentItem[]) => void
+  onSubmittedForReview: () => void
 }) {
   const [opinionOfValue, setOpinionOfValue] = useState(
     recommendedValueCents ? (recommendedValueCents / 100).toFixed(2) : ''
@@ -82,8 +81,8 @@ export default function PostPaymentDetailsForm({
         await apiFetchUpload(`/api/v1/orders/${orderId}/condition-photos`, formData)
       }
 
-      const result = await apiFetch(`/api/v1/orders/${orderId}/documents/generate`, { method: 'POST' })
-      onGenerated(result.documents)
+      await apiFetch(`/api/v1/orders/${orderId}/documents/generate`, { method: 'POST' })
+      onSubmittedForReview()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong generating your package. Please try again.')
       setLoading(false)
