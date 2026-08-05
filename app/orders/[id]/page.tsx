@@ -323,20 +323,13 @@ function CompsSection({
   return (
     <>
       <h2 className="mt-10 text-lg font-semibold text-foreground">Comparable Properties</h2>
-      {comps.source === 'demo' ? (
+      {comps.source !== 'demo' && comps.source !== 'verified' && (
         <p className="mt-2 rounded-[var(--radius-sm)] bg-warning-tint px-4 py-3 text-sm text-warning">
-          These are placeholder example figures, not based on your actual property — real
-          comparable sales data isn&apos;t configured for this environment yet.
+          These figures come from an automated market estimate and are not independently
+          verified by an appraiser. Final values may differ.
         </p>
-      ) : (
-        comps.source !== 'verified' && (
-          <p className="mt-2 rounded-[var(--radius-sm)] bg-warning-tint px-4 py-3 text-sm text-warning">
-            These figures come from an automated market estimate and are not independently
-            verified by an appraiser. Final values may differ.
-          </p>
-        )
       )}
-      {comps.assessment_year && comps.lien_date && (
+      {comps.assessment_year && comps.lien_date && comps.source !== 'demo' && (
         <p className="mt-2 text-xs text-foreground-muted">
           A California decline-in-value appeal for the {comps.assessment_year} assessment roll is
           about fair market value as of the January 1, {comps.assessment_year} lien date — these
@@ -344,7 +337,17 @@ function CompsSection({
           date.
         </p>
       )}
-      {comps.comps.length === 0 ? (
+      {comps.source === 'demo' ? (
+        // Never render fabricated placeholder comps as if they were real
+        // rows in a table -- even disclosed, that's still evidence that
+        // doesn't exist appearing on a customer screen (Appeal Package
+        // Redesign Plan P0.3: "Prevent prohibited comparables from
+        // appearing in customer screens ... represented as real cases").
+        <Card className="mt-4 p-6 text-center text-sm text-foreground-muted">
+          Real comparable sales data isn&apos;t available for this property yet. Our team has been
+          notified and will follow up.
+        </Card>
+      ) : comps.comps.length === 0 ? (
         <Card className="mt-4 p-6 text-center text-sm text-foreground-muted">
           No comparable sales were found for this property yet.
         </Card>
