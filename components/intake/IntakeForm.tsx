@@ -52,6 +52,13 @@ export default function IntakeForm({
   // widget below owns its own internal <input> and never reflects our
   // React state directly.
   const [addressConfirmed, setAddressConfirmed] = useState(Boolean(initialAddress))
+  // Separate from addressConfirmed: an address can be recognized (from
+  // Places, OCR, or a lead code) without the owner having actually said
+  // "yes, that's my property" yet. UI Redesign Master Plan §6.2: show a
+  // distinct confirmation step ("Is this the property you want to
+  // review?") before proceeding, rather than silently treating a
+  // recognized address as an implicit confirmation.
+  const [propertyConfirmed, setPropertyConfirmed] = useState(false)
 
   const [apn, setApn] = useState('')
   const [assessedValue, setAssessedValue] = useState('')
@@ -73,6 +80,15 @@ export default function IntakeForm({
   const [loading, setLoading] = useState(false)
 
   const assessorLookupUrl = county ? COUNTY_ASSESSOR_LINKS[countyToSlug(county)] : undefined
+
+  function resetAddress() {
+    setAddressConfirmed(false)
+    setPropertyConfirmed(false)
+    setParsedAddress(null)
+    setCodeApplied(false)
+    setLeadCode(null)
+    setCode('')
+  }
 
   // Fired once, the moment this form is actually reached -- the funnel
   // step between "viewed the landing page" and "submitted an address."
@@ -283,11 +299,7 @@ export default function IntakeForm({
               </span>
               <button
                 type="button"
-                onClick={() => {
-                  setCodeApplied(false)
-                  setLeadCode(null)
-                  setCode('')
-                }}
+                onClick={resetAddress}
                 className="flex-shrink-0 text-xs font-semibold text-primary hover:underline"
               >
                 Not your letter?
@@ -356,24 +368,37 @@ export default function IntakeForm({
               <span className="sr-only"> (required)</span>
             </label>
             {addressConfirmed ? (
-              <div
-                aria-labelledby={addressLabelId}
-                className="flex items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-border bg-surface-alt px-4 py-3"
-              >
-                <span className="flex items-center gap-2 text-sm text-foreground">
-                  <CheckCircleIcon />
-                  {situsAddress}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAddressConfirmed(false)
-                    setParsedAddress(null)
-                  }}
-                  className="flex-shrink-0 text-xs font-semibold text-primary hover:underline"
-                >
-                  Change
-                </button>
+              <div aria-labelledby={addressLabelId} className="rounded-[var(--radius-sm)] border border-border bg-surface-alt px-4 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="flex items-center gap-2 text-sm text-foreground">
+                    <CheckCircleIcon />
+                    {situsAddress}
+                  </span>
+                  {propertyConfirmed && (
+                    <button
+                      type="button"
+                      onClick={resetAddress}
+                      className="flex-shrink-0 text-xs font-semibold text-primary hover:underline"
+                    >
+                      Change
+                    </button>
+                  )}
+                </div>
+                {!propertyConfirmed && (
+                  <div className="mt-3 border-t border-border pt-3">
+                    <p className="text-sm font-medium text-foreground">
+                      Is this the property you want to review?
+                    </p>
+                    <div className="mt-2.5 flex flex-wrap gap-2">
+                      <Button type="button" size="md" onClick={() => setPropertyConfirmed(true)}>
+                        Yes, continue
+                      </Button>
+                      <Button type="button" variant="secondary" size="md" onClick={resetAddress}>
+                        This isn&apos;t my property
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <>
@@ -400,98 +425,102 @@ export default function IntakeForm({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="County (optional)">
-              <Input type="text" value={county} onChange={(e) => setCounty(e.target.value)} />
-            </Field>
-            <Field label="State (optional)">
-              <Input
-                type="text"
-                value={state}
-                onChange={(e) => setState(e.target.value.toUpperCase())}
-                maxLength={2}
-                placeholder="CA"
-              />
-            </Field>
-          </div>
+          {propertyConfirmed && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="County (optional)">
+                  <Input type="text" value={county} onChange={(e) => setCounty(e.target.value)} />
+                </Field>
+                <Field label="State (optional)">
+                  <Input
+                    type="text"
+                    value={state}
+                    onChange={(e) => setState(e.target.value.toUpperCase())}
+                    maxLength={2}
+                    placeholder="CA"
+                  />
+                </Field>
+              </div>
 
-          <Field label="APN (optional)">
-            <Input type="text" value={apn} onChange={(e) => setApn(e.target.value)} />
-          </Field>
+              <Field label="APN (optional)">
+                <Input type="text" value={apn} onChange={(e) => setApn(e.target.value)} />
+              </Field>
 
-          <Field label="Assessed value" required>
-            <MoneyInput value={assessedValue} onChange={setAssessedValue} />
-            <p className="mt-1.5 text-xs text-foreground-muted">
-              Your own property&apos;s assessed value, from your most recent tax bill or
-              assessment notice.{' '}
-              {assessorLookupUrl && (
-                <a
-                  href={assessorLookupUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-primary hover:underline"
+              <Field label="Assessed value" required>
+                <MoneyInput value={assessedValue} onChange={setAssessedValue} />
+                <p className="mt-1.5 text-xs text-foreground-muted">
+                  Your own property&apos;s assessed value, from your most recent tax bill or
+                  assessment notice.{' '}
+                  {assessorLookupUrl && (
+                    <a
+                      href={assessorLookupUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-primary hover:underline"
+                    >
+                      Look it up on the {county} County Assessor&apos;s site
+                    </a>
+                  )}
+                </p>
+              </Field>
+
+              <Field label="Owner name (optional)">
+                <Input type="text" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} />
+              </Field>
+
+              <Field label="Owner email (optional)">
+                <Input type="email" value={ownerEmail} onChange={(e) => setOwnerEmail(e.target.value)} />
+              </Field>
+
+              <Field label="Owner phone (optional)">
+                <Input type="tel" value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} />
+              </Field>
+
+              <Field label="Do you live in this property? (optional)">
+                <select
+                  value={occupied}
+                  onChange={(e) => setOccupied(e.target.value as 'yes' | 'no')}
+                  className="h-12 w-full rounded-[var(--radius-sm)] border border-border bg-surface px-4 text-[0.95rem] text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary-tint"
                 >
-                  Look it up on the {county} County Assessor&apos;s site
-                </a>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </Field>
+
+              <Field label="Property type (optional)">
+                <select
+                  value={propertyType}
+                  onChange={(e) => setPropertyType(e.target.value)}
+                  className="h-12 w-full rounded-[var(--radius-sm)] border border-border bg-surface px-4 text-[0.95rem] text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary-tint"
+                >
+                  <option value="">Select…</option>
+                  <option value="single_family">Single family home</option>
+                  <option value="condo">Condo / townhome</option>
+                  <option value="multi_family">Multi-family (2-4 units)</option>
+                  <option value="commercial">Commercial</option>
+                  <option value="other">Other</option>
+                </select>
+                <p className="mt-1.5 text-xs text-foreground-muted">
+                  Used to fill in the correct property-type box on your official application.
+                </p>
+              </Field>
+
+              <p className="text-xs text-foreground-muted">
+                <span className="text-error">*</span> Required. Owner details are optional here —
+                you&apos;ll only need to fill them in right before you pay for your appeal package.
+              </p>
+
+              {error && (
+                <p role="alert" className="rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
+                  {error}
+                </p>
               )}
-            </p>
-          </Field>
 
-          <Field label="Owner name (optional)">
-            <Input type="text" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} />
-          </Field>
-
-          <Field label="Owner email (optional)">
-            <Input type="email" value={ownerEmail} onChange={(e) => setOwnerEmail(e.target.value)} />
-          </Field>
-
-          <Field label="Owner phone (optional)">
-            <Input type="tel" value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} />
-          </Field>
-
-          <Field label="Do you live in this property? (optional)">
-            <select
-              value={occupied}
-              onChange={(e) => setOccupied(e.target.value as 'yes' | 'no')}
-              className="h-12 w-full rounded-[var(--radius-sm)] border border-border bg-surface px-4 text-[0.95rem] text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary-tint"
-            >
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-            </select>
-          </Field>
-
-          <Field label="Property type (optional)">
-            <select
-              value={propertyType}
-              onChange={(e) => setPropertyType(e.target.value)}
-              className="h-12 w-full rounded-[var(--radius-sm)] border border-border bg-surface px-4 text-[0.95rem] text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary-tint"
-            >
-              <option value="">Select…</option>
-              <option value="single_family">Single family home</option>
-              <option value="condo">Condo / townhome</option>
-              <option value="multi_family">Multi-family (2-4 units)</option>
-              <option value="commercial">Commercial</option>
-              <option value="other">Other</option>
-            </select>
-            <p className="mt-1.5 text-xs text-foreground-muted">
-              Used to fill in the correct property-type box on your official application.
-            </p>
-          </Field>
-
-          <p className="text-xs text-foreground-muted">
-            <span className="text-error">*</span> Required. Owner details are optional here —
-            you&apos;ll only need to fill them in right before you pay for your appeal package.
-          </p>
-
-          {error && (
-            <p role="alert" className="rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
-              {error}
-            </p>
+              <Button type="submit" disabled={loading} className="w-full">
+                {loading ? 'Submitting…' : 'See My Recommendation'}
+              </Button>
+            </>
           )}
-
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? 'Submitting…' : 'See My Recommendation'}
-          </Button>
         </form>
       </Card>
     </div>
