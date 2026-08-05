@@ -5,7 +5,7 @@ type Variant = "primary" | "secondary" | "ghost";
 type Size = "md" | "lg";
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-[var(--radius-sm)] font-semibold transition-colors disabled:opacity-50 disabled:pointer-events-none";
+  "inline-flex items-center justify-center gap-2 text-center rounded-[var(--radius-sm)] font-semibold transition-colors disabled:opacity-50 disabled:pointer-events-none";
 
 const variants: Record<Variant, string> = {
   primary: "bg-primary text-white hover:bg-primary-hover",
@@ -14,9 +14,11 @@ const variants: Record<Variant, string> = {
   ghost: "text-foreground hover:bg-surface-alt",
 };
 
+// min-h (not h-*) + vertical padding, so a button whose text wraps onto a
+// second line on narrow screens grows to fit it instead of clipping it.
 const sizes: Record<Size, string> = {
-  md: "h-11 px-5 text-[0.95rem]",
-  lg: "h-13 px-7 text-base",
+  md: "min-h-11 px-5 py-2.5 text-[0.95rem]",
+  lg: "min-h-13 px-7 py-3 text-base",
 };
 
 interface CommonProps {
