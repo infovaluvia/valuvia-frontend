@@ -8,28 +8,16 @@ export default function AppealIntakeHero({
   initialCode?: string;
 }) {
   return (
-    <section id="start" className="relative overflow-hidden border-b border-border bg-background">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-24 right-[-10%] h-[420px] w-[420px] rounded-full bg-gradient-to-br from-primary/25 via-[#6d8cf5]/15 to-transparent blur-3xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-32 left-[-10%] h-[380px] w-[380px] rounded-full bg-gradient-to-tr from-accent-gold/20 via-accent-green/10 to-transparent blur-3xl"
-      />
-
-      <div className="relative mx-auto grid max-w-[1180px] gap-12 px-6 py-16 md:grid-cols-[1fr_1fr] md:items-start md:gap-10 md:px-8 md:py-20">
+    <section id="start" className="border-b border-border bg-background">
+      <div className="mx-auto grid max-w-[1180px] gap-12 px-6 py-16 md:grid-cols-[1fr_1fr] md:items-start md:gap-10 md:px-8 md:py-20">
         <div>
           <span className="inline-flex items-center rounded-full bg-primary-tint px-4 py-1.5 text-sm font-semibold text-primary">
             Now supporting appeals nationwide
           </span>
 
           <h1 className="mt-6 text-[2.1rem] leading-[1.1] font-bold text-foreground md:text-[2.75rem]">
-            Your home may be{" "}
-            <span className="bg-gradient-to-r from-primary to-[#6d8cf5] bg-clip-text text-transparent">
-              over-assessed
-            </span>
-            . Find out in minutes.
+            Your home may be <span className="text-primary">over-assessed</span>. Find out in
+            minutes.
           </h1>
 
           <p className="mt-5 max-w-[480px] text-lg text-foreground-muted">
@@ -49,7 +37,7 @@ export default function AppealIntakeHero({
             </span>
           </div>
 
-          <div className="mt-10 grid grid-cols-1 gap-6 border-t border-border pt-8 sm:grid-cols-3">
+          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-3">
             <TrustPoint icon={<ShieldIcon />} title="No upfront cost" subtitle="Pay only for what you order" />
             <TrustPoint icon={<LockIcon />} title="Your data is secure" subtitle="Encrypted, never shared" />
             <TrustPoint icon={<BuildingIcon />} title="County-specific expertise" subtitle="Built for local filing rules" />
@@ -57,7 +45,7 @@ export default function AppealIntakeHero({
         </div>
 
         <div className="relative">
-          <div className="absolute -top-6 right-4 z-10 hidden max-w-[190px] rotate-2 rounded-[var(--radius-md)] border border-border bg-surface p-3.5 shadow-md md:flex md:items-start md:gap-2.5">
+          <div className="pointer-events-none absolute -top-6 right-4 z-10 hidden max-w-[190px] rotate-2 rounded-[var(--radius-md)] border border-border bg-surface p-3.5 shadow-md md:flex md:items-start md:gap-2.5">
             <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-primary-tint text-primary">
               <SparkleIcon />
             </span>

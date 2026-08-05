@@ -308,28 +308,30 @@ function CompsSection({
         )
       )}
       <Card className="mt-4 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border bg-surface-alt">
-              <Th>Address</Th>
-              <Th>Sale Date</Th>
-              <Th>Price</Th>
-              <Th>Sqft</Th>
-              <Th>$/Sqft</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {comps.comps.map((c, i) => (
-              <tr key={i} className="border-b border-border last:border-0">
-                <Td>{c.address}</Td>
-                <Td>{c.sale_date}</Td>
-                <Td>{formatDollars(c.price * 100)}</Td>
-                <Td>{c.sqft}</Td>
-                <Td>{formatDollars(c.price_per_sqft * 100)}</Td>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] text-sm">
+            <thead>
+              <tr className="border-b border-border bg-surface-alt">
+                <Th>Address</Th>
+                <Th>Sale Date</Th>
+                <Th>Price</Th>
+                <Th>Sqft</Th>
+                <Th>$/Sqft</Th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {comps.comps.map((c, i) => (
+                <tr key={i} className="border-b border-border last:border-0">
+                  <Td>{c.address}</Td>
+                  <Td>{c.sale_date}</Td>
+                  <Td>{formatDollars(c.price * 100)}</Td>
+                  <Td>{c.sqft}</Td>
+                  <Td>{formatDollars(c.price_per_sqft * 100)}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Card>
     </>
   )

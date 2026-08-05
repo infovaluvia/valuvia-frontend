@@ -62,7 +62,7 @@ export default function ChatWidget() {
   return (
     <div className="fixed bottom-5 right-5 z-50">
       {open && (
-        <div className="mb-3 flex h-[480px] w-[340px] flex-col overflow-hidden rounded-[var(--radius-lg)] border border-border bg-surface shadow-xl sm:w-[380px]">
+        <div className="mb-3 flex h-[70vh] max-h-[480px] w-[calc(100vw-2.5rem)] max-w-[340px] flex-col overflow-hidden rounded-[var(--radius-lg)] border border-border bg-surface shadow-xl sm:max-w-[380px]">
           <div className="flex items-center justify-between border-b border-border bg-primary px-4 py-3">
             <p className="text-sm font-semibold text-white">Valuvia Assistant</p>
             <button
