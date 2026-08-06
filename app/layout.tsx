@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Valuvia — Santa Clara County Property Assessment Review",
+  title: "Valuvia — Property Assessment Review",
   description:
-    "Independent preliminary review of your Santa Clara County property assessment, based on recent comparable sales. Free to check; owner reviews, signs, and files. Estimates only, not guarantees.",
+    "Independent preliminary review of your property assessment, based on recent comparable sales, for supported California and Oregon counties. Free to check; owner reviews, signs, and files. Estimates only, not guarantees.",
 };
 
 export default function RootLayout({

@@ -1,22 +1,42 @@
 import IntakeForm from "@/components/intake/IntakeForm";
+import { apiFetchServer } from "@/lib/api-server";
 
-export default function AppealIntakeHero({
+interface Jurisdiction {
+  name: string;
+  state: string;
+}
+
+async function fetchServingLine(): Promise<string> {
+  try {
+    const jurisdictions: Jurisdiction[] = await apiFetchServer("/api/v1/jurisdictions");
+    const states = Array.from(new Set(jurisdictions.map((j) => j.state))).sort();
+    if (states.length === 0) return "Check your county's coverage below";
+    if (states.length === 1) return `Now serving ${jurisdictions.length} ${states[0]} counties`;
+    return `Now serving ${jurisdictions.length} counties across ${states.join(" & ")}`;
+  } catch {
+    return "Check your county's coverage below";
+  }
+}
+
+export default async function AppealIntakeHero({
   initialAddress = "",
   initialCode = "",
 }: {
   initialAddress?: string;
   initialCode?: string;
 }) {
+  const servingLine = await fetchServingLine();
+
   return (
     <section id="start" className="border-b border-border bg-background">
       <div className="mx-auto grid max-w-[1180px] gap-12 px-6 py-16 md:grid-cols-[1fr_1fr] md:items-start md:gap-10 md:px-8 md:py-20">
         <div>
           <span className="inline-flex items-center rounded-full bg-primary-tint px-4 py-1.5 text-sm font-semibold text-primary">
-            Now serving Santa Clara County, CA
+            {servingLine}
           </span>
 
           <h1 className="mt-6 text-[2.1rem] leading-[1.1] font-bold text-foreground md:text-[2.75rem]">
-            Think Your 2026 Santa Clara County Property Assessment May Be Too High?
+            Think Your 2026 Property Assessment May Be Too High?
           </h1>
 
           <p className="mt-5 max-w-[480px] text-lg text-foreground-muted">
