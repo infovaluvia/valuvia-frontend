@@ -43,6 +43,23 @@ interface Jurisdiction {
   appeal_board_name: string | null
 }
 
+interface SavingsEstimate {
+  first_year_savings_cents: number
+  valuvia_fee_cents: number
+  filing_fee_cents: number | null
+  net_first_year_savings_cents: number
+  projection_years: number
+  per_year_savings_cents: number[]
+  cumulative_projected_savings_cents: number
+  projection_note: string
+}
+
+interface TimelineEstimate {
+  filing_deadline: string | null
+  statutory_decision_deadline: string | null
+  statutory_decision_note: string | null
+}
+
 interface Screening {
   verdict: 'not_supported' | 'out_of_window' | 'possible_candidate' | 'flagged_overassessed'
   reasons: string[]
@@ -76,6 +93,8 @@ interface OrderData {
   jurisdiction: Jurisdiction | null
   screening: Screening | null
   missing_fields: string[]
+  savings_estimate: SavingsEstimate | null
+  timeline_estimate: TimelineEstimate | null
 }
 
 const VERDICT_COPY: Record<Screening['verdict'], { title: string; tone: 'success' | 'warning' | 'error' | 'info' }> = {
@@ -95,7 +114,7 @@ export default async function OrderPage({
   const { id } = await params
   const { checkout } = await searchParams
   const data = (await apiFetchServer(`/api/v1/orders/${id}`)) as OrderData
-  const { order, comps, jurisdiction, screening, missing_fields } = data
+  const { order, comps, jurisdiction, screening, missing_fields, savings_estimate, timeline_estimate } = data
   // comps.market_value_cents is the raw comps-service output and can carry
   // a number even when there's no real evidence behind it (demo fallback,
   // or a RentCast AVM estimate with zero verified comps) -- the backend
@@ -130,7 +149,9 @@ export default async function OrderPage({
             <>
               <RecommendationCard screening={screening} />
 
-              {jurisdiction && <ProcessCard jurisdiction={jurisdiction} formatDollars={formatDollars} />}
+              {jurisdiction && (
+                <ProcessCard jurisdiction={jurisdiction} formatDollars={formatDollars} timeline={timeline_estimate} />
+              )}
 
               <Card className="mt-6 p-6 md:p-8">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -146,6 +167,8 @@ export default async function OrderPage({
                   />
                 </div>
               </Card>
+
+              {savings_estimate && <SavingsBreakdownCard estimate={savings_estimate} formatDollars={formatDollars} />}
 
               {comps.source !== 'unsupported' && (
                 <CompsSection comps={comps} formatDollars={formatDollars} />
@@ -227,9 +250,11 @@ function RecommendationCard({ screening }: { screening: Screening }) {
 function ProcessCard({
   jurisdiction,
   formatDollars,
+  timeline,
 }: {
   jurisdiction: Jurisdiction
   formatDollars: (cents: number | null | undefined) => string
+  timeline?: TimelineEstimate | null
 }) {
   return (
     <>
@@ -280,9 +305,41 @@ function ProcessCard({
             <b>4. Hearing:</b> The {jurisdiction.appeal_board_name || 'Assessment Appeals Board'} reviews your evidence and issues a
             decision — your Hearing Binder walks through what to expect.
           </li>
+          {timeline?.statutory_decision_note && (
+            <li>
+              <b>5. Legal decision deadline:</b> {timeline.statutory_decision_note}
+              {timeline.statutory_decision_deadline && (
+                <> For you, that&apos;s <b>{timeline.statutory_decision_deadline}</b> based on the filing date you reported.</>
+              )}
+            </li>
+          )}
         </ol>
       </Card>
     </>
+  )
+}
+
+function SavingsBreakdownCard({
+  estimate,
+  formatDollars,
+}: {
+  estimate: SavingsEstimate
+  formatDollars: (cents: number | null | undefined) => string
+}) {
+  return (
+    <Card className="mt-6 p-6 md:p-8">
+      <h3 className="text-base font-semibold text-foreground">Savings Breakdown</h3>
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Stat label="Valuvia's fee" value={formatDollars(estimate.valuvia_fee_cents)} />
+        <Stat label="County filing fee" value={formatDollars(estimate.filing_fee_cents)} />
+        <Stat label="Net first-year savings" value={formatDollars(estimate.net_first_year_savings_cents)} highlight />
+        <Stat
+          label={`${estimate.projection_years}-year projected savings`}
+          value={formatDollars(estimate.cumulative_projected_savings_cents)}
+        />
+      </div>
+      <p className="mt-4 text-xs text-foreground-muted">{estimate.projection_note}</p>
+    </Card>
   )
 }
 
