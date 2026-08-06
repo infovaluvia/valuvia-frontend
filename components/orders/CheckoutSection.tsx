@@ -313,7 +313,7 @@ export default function CheckoutSection({
         </p>
         {acknowledgementCheckbox}
         <Button onClick={handleBuyClick} className="w-full">
-          Try again — I Am Ready to Buy ($79)
+          Try again — Unlock My Official Appeal Package ($79)
         </Button>
       </Card>
     )
@@ -359,7 +359,7 @@ export default function CheckoutSection({
       <div className="mt-8">
         {acknowledgementCheckbox}
         <Button onClick={handleBuyClick} size="lg" className="w-full">
-          I Am Ready to Buy — $79
+          Unlock My Official Appeal Package — $79
         </Button>
       </div>
     )
