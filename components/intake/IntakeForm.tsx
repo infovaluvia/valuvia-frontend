@@ -76,6 +76,14 @@ export default function IntakeForm({
   const [ocrLoading, setOcrLoading] = useState(false)
   const [ocrError, setOcrError] = useState<string | null>(null)
 
+  // Ownwell/AppealDesk-style auto-fill: once the property is confirmed,
+  // look up the county's assessed value from public records so the
+  // customer doesn't have to type it in themselves. Still fully
+  // editable below -- county data can lag reality, and the customer is
+  // the one signing the appeal application, not this lookup.
+  const [assessorLookupLoading, setAssessorLookupLoading] = useState(false)
+  const [assessorLookupApplied, setAssessorLookupApplied] = useState(false)
+
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -137,6 +145,34 @@ export default function IntakeForm({
       container.innerHTML = ''
     }
   }, [placesLib, addressConfirmed])
+
+  // Fires once the property is confirmed, skipping if a lead code or
+  // tax-bill OCR already supplied an assessed value -- those are more
+  // specific/curated sources and shouldn't be silently overwritten by
+  // this best-effort county lookup.
+  useEffect(() => {
+    if (!propertyConfirmed || codeApplied || assessedValue.trim()) return
+    let cancelled = false
+    setAssessorLookupLoading(true)
+    apiFetch(`/api/v1/properties/lookup?address=${encodeURIComponent(situsAddress)}`)
+      .then((snapshot) => {
+        if (cancelled || !snapshot?.assessed_value_cents) return
+        setAssessedValue(sanitizeMoneyString((snapshot.assessed_value_cents / 100).toFixed(2)))
+        if (snapshot.property_type) setPropertyType(snapshot.property_type)
+        setAssessorLookupApplied(true)
+      })
+      .catch(() => {
+        // Best-effort convenience layer -- silently fall back to manual
+        // entry, same as when a lead code isn't found.
+      })
+      .finally(() => {
+        if (!cancelled) setAssessorLookupLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propertyConfirmed])
 
   async function lookupCode(rawCode: string) {
     const normalized = rawCode.trim().toUpperCase()
@@ -454,7 +490,24 @@ export default function IntakeForm({
               </Field>
 
               <Field label="Assessed value" required>
-                <MoneyInput value={assessedValue} onChange={setAssessedValue} />
+                <MoneyInput
+                  value={assessedValue}
+                  onChange={(v) => {
+                    setAssessedValue(v)
+                    setAssessorLookupApplied(false)
+                  }}
+                />
+                {assessorLookupLoading && (
+                  <p role="status" className="mt-1.5 text-xs text-foreground-muted">
+                    Looking up your county&apos;s assessed value…
+                  </p>
+                )}
+                {assessorLookupApplied && (
+                  <p className="mt-1.5 flex items-center gap-1.5 text-xs text-accent-green">
+                    <CheckCircleIcon />
+                    Auto-filled from county assessment records — edit if it looks off.
+                  </p>
+                )}
                 <p className="mt-1.5 text-xs text-foreground-muted">
                   Your own property&apos;s assessed value, from your most recent tax bill or
                   assessment notice.{' '}
