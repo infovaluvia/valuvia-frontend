@@ -77,6 +77,14 @@ export default function IntakeForm({
   const [ocrLoading, setOcrLoading] = useState(false)
   const [ocrError, setOcrError] = useState<string | null>(null)
 
+  // Ownwell/AppealDesk-style intake: one prominent address field is the
+  // whole hero action. The mailer-code and tax-bill-upload paths are
+  // real but used by a minority of visitors, so they're collapsed
+  // behind small toggle links instead of two permanently-visible boxes
+  // competing with the address field for attention.
+  const [showCodeEntry, setShowCodeEntry] = useState(false)
+  const [showBillUpload, setShowBillUpload] = useState(false)
+
   // Ownwell/AppealDesk-style auto-fill: once the property is confirmed,
   // look up the county's assessed value from public records so the
   // customer doesn't have to type it in themselves. Still fully
@@ -339,82 +347,10 @@ export default function IntakeForm({
   return (
     <div className="mx-auto max-w-[560px]">
       <Card className="p-6 md:p-8">
-        <div className="mb-6 rounded-[var(--radius-sm)] border border-primary/30 bg-primary-tint p-4">
-          {codeApplied ? (
-            <div className="flex items-center justify-between gap-3">
-              <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <CheckCircleIcon />
-                Code applied — we&apos;ve filled in your property details below.
-              </span>
-              <button
-                type="button"
-                onClick={resetAddress}
-                className="flex-shrink-0 text-xs font-semibold text-primary hover:underline"
-              >
-                Not your letter?
-              </button>
-            </div>
-          ) : (
-            <>
-              <label htmlFor={codeInputId} className="mb-2 block text-sm font-medium text-foreground">
-                Have a code from your letter?
-              </label>
-              <p id={`${codeInputId}-hint`} className="mb-3 text-xs text-foreground-muted">
-                Enter the code printed on your Valuvia mailer to skip straight to your prefilled
-                property details.
-              </p>
-              <div className="flex gap-2">
-                <Input
-                  id={codeInputId}
-                  type="text"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.toUpperCase())}
-                  placeholder="e.g. 5UUE7U"
-                  className="uppercase tracking-wide"
-                  aria-describedby={`${codeInputId}-hint`}
-                  aria-invalid={codeError ? true : undefined}
-                />
-                <Button
-                  type="button"
-                  onClick={() => lookupCode(code)}
-                  disabled={codeLoading || !code.trim()}
-                  className="flex-shrink-0"
-                >
-                  {codeLoading ? 'Looking up…' : 'Apply code'}
-                </Button>
-              </div>
-              {codeError && <p role="alert" className="mt-2 text-xs text-error">{codeError}</p>}
-            </>
-          )}
-        </div>
-
-        <div className="mb-6 rounded-[var(--radius-sm)] border border-border bg-surface-alt p-4">
-          <label htmlFor={billUploadId} className="mb-2 block text-sm font-medium text-foreground">
-            Upload your tax bill or assessment notice (optional)
-          </label>
-          <p id={`${billUploadId}-hint`} className="mb-3 text-xs text-foreground-muted">
-            We&apos;ll read the address, county, APN, owner name, and assessed value for you —
-            you can still edit anything below before continuing.
-          </p>
-          <input
-            id={billUploadId}
-            type="file"
-            accept="application/pdf,image/*"
-            onChange={handleBillUpload}
-            disabled={ocrLoading}
-            aria-describedby={`${billUploadId}-hint`}
-            className="block w-full text-sm text-foreground-muted file:mr-4 file:rounded-[var(--radius-sm)] file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary/90"
-          />
-          {ocrLoading && <p role="status" className="mt-2 text-xs text-foreground-muted">Reading your document…</p>}
-          {ocrError && <p role="alert" className="mt-2 text-xs text-error">{ocrError}</p>}
-        </div>
-
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label id={addressLabelId} className="mb-1.5 block text-sm font-medium text-foreground">
-              Property address
-              <span aria-hidden="true" className="ml-1 text-error">*</span>
-              <span className="sr-only"> (required)</span>
+            <label id={addressLabelId} className="mb-2 block text-base font-semibold text-foreground">
+              Enter your property address
             </label>
             {addressConfirmed ? (
               <div aria-labelledby={addressLabelId} className="rounded-[var(--radius-sm)] border border-border bg-surface-alt px-4 py-3">
@@ -471,6 +407,7 @@ export default function IntakeForm({
                     onBlur={() => situsAddress.trim() && setAddressConfirmed(true)}
                     placeholder="Start typing your address…"
                     autoComplete="off"
+                    className="h-14 text-lg"
                   />
                 )}
               </>
@@ -481,6 +418,99 @@ export default function IntakeForm({
                   ? 'Fill in county and state below if they weren’t detected automatically.'
                   : 'Enter your county and state below if suggestions don’t appear.'}
               </p>
+            )}
+
+            {!addressConfirmed && (
+              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setShowCodeEntry((v) => !v)}
+                  className="font-semibold text-primary hover:underline"
+                >
+                  Have a code from your letter?
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowBillUpload((v) => !v)}
+                  className="font-semibold text-primary hover:underline"
+                >
+                  Or upload your tax bill to autofill
+                </button>
+              </div>
+            )}
+
+            {!addressConfirmed && (showCodeEntry || codeApplied) && (
+              <div className="mt-3 rounded-[var(--radius-sm)] border border-primary/30 bg-primary-tint p-4">
+                {codeApplied ? (
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <CheckCircleIcon />
+                      Code applied — we&apos;ve filled in your property details below.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={resetAddress}
+                      className="flex-shrink-0 text-xs font-semibold text-primary hover:underline"
+                    >
+                      Not your letter?
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <label htmlFor={codeInputId} className="mb-2 block text-sm font-medium text-foreground">
+                      Enter your mailer code
+                    </label>
+                    <p id={`${codeInputId}-hint`} className="mb-3 text-xs text-foreground-muted">
+                      Enter the code printed on your Valuvia mailer to skip straight to your prefilled
+                      property details.
+                    </p>
+                    <div className="flex gap-2">
+                      <Input
+                        id={codeInputId}
+                        type="text"
+                        value={code}
+                        onChange={(e) => setCode(e.target.value.toUpperCase())}
+                        placeholder="e.g. 5UUE7U"
+                        className="uppercase tracking-wide"
+                        aria-describedby={`${codeInputId}-hint`}
+                        aria-invalid={codeError ? true : undefined}
+                      />
+                      <Button
+                        type="button"
+                        onClick={() => lookupCode(code)}
+                        disabled={codeLoading || !code.trim()}
+                        className="flex-shrink-0"
+                      >
+                        {codeLoading ? 'Looking up…' : 'Apply code'}
+                      </Button>
+                    </div>
+                    {codeError && <p role="alert" className="mt-2 text-xs text-error">{codeError}</p>}
+                  </>
+                )}
+              </div>
+            )}
+
+            {!addressConfirmed && showBillUpload && (
+              <div className="mt-3 rounded-[var(--radius-sm)] border border-border bg-surface-alt p-4">
+                <label htmlFor={billUploadId} className="mb-2 block text-sm font-medium text-foreground">
+                  Upload your tax bill or assessment notice
+                </label>
+                <p id={`${billUploadId}-hint`} className="mb-3 text-xs text-foreground-muted">
+                  We&apos;ll read the address, county, APN, owner name, and assessed value for you —
+                  you can still edit anything below before continuing.
+                </p>
+                <input
+                  id={billUploadId}
+                  type="file"
+                  accept="application/pdf,image/*"
+                  onChange={handleBillUpload}
+                  disabled={ocrLoading}
+                  aria-describedby={`${billUploadId}-hint`}
+                  className="block w-full text-sm text-foreground-muted file:mr-4 file:rounded-[var(--radius-sm)] file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary/90"
+                />
+                {ocrLoading && <p role="status" className="mt-2 text-xs text-foreground-muted">Reading your document…</p>}
+                {ocrError && <p role="alert" className="mt-2 text-xs text-error">{ocrError}</p>}
+              </div>
             )}
           </div>
 
