@@ -5,7 +5,7 @@ import Badge from '@/components/ui/Badge'
 import { apiFetchServer } from '@/lib/api-server'
 import CheckoutSection from '@/components/orders/CheckoutSection'
 import CompleteDetailsForm from '@/components/orders/CompleteDetailsForm'
-import ApplicationPreview from '@/components/orders/ApplicationPreview'
+import PreviewPackageGallery from '@/components/orders/PreviewPackageGallery'
 import ConditionIntakeForm from '@/components/orders/ConditionIntakeForm'
 
 function formatDollars(cents: number | null | undefined) {
@@ -172,11 +172,15 @@ export default async function OrderPage({
                   )}
                   {(order.status === 'intake' || order.status === 'comps_review') && (
                     <>
-                      <ApplicationPreview orderId={order.id} />
+                      <PreviewPackageGallery
+                        orderId={order.id}
+                        estimatedSavingsCents={order.estimated_savings_cents}
+                        requestedValueCents={order.requested_value_cents}
+                        comparableCount={comps.comps?.length ?? 0}
+                      />
                       <ConditionIntakeForm orderId={order.id} recommendedValueCents={verifiedMarketValueCents} />
                     </>
                   )}
-                  <PackagePreviewCard />
                   <CheckoutSection
                     orderId={order.id}
                     initialStatus={order.status}
@@ -275,52 +279,6 @@ function ProcessCard({
             decision — your Hearing Binder walks through what to expect.
           </li>
         </ol>
-      </Card>
-    </>
-  )
-}
-
-const PACKAGE_VOLUMES = [
-  'Official county appeal application, pre-filled and ready to sign',
-  'Executive Summary — the case for your appeal in one page',
-  'Government Filing Package — completion worksheet and submission checklist',
-  'Comparable Sales Report',
-  'Property Condition Report',
-  'Evidence Book — full assessment history and adjustment framework',
-  'Hearing Binder — opening statement and anticipated Board questions',
-]
-
-function PackagePreviewCard() {
-  return (
-    <>
-      <h2 className="mt-10 text-lg font-semibold text-foreground">
-        What You&apos;ll Get &amp; How to Use It
-      </h2>
-      <Card className="mt-4 p-6 md:p-8">
-        <p className="text-sm text-foreground">
-          Your package includes 7 documents, generated specifically for your property:
-        </p>
-        <ul className="mt-3 space-y-1.5">
-          {PACKAGE_VOLUMES.map((v) => (
-            <li key={v} className="flex gap-2 text-sm text-foreground">
-              <span className="text-accent-green">✓</span>
-              {v}
-            </li>
-          ))}
-        </ul>
-
-        <p className="mt-5 text-sm text-foreground">
-          <b>To appeal:</b> print and sign the official application, mail it (or file online
-          where available) with the filing fee by the deadline above, then bring the Evidence
-          Book, Comparable Sales Report, and Hearing Binder to your hearing.
-        </p>
-
-        <p className="mt-5 rounded-[var(--radius-sm)] bg-success-tint px-4 py-3 text-sm text-success">
-          <b>Our commitment:</b> if anything in your package is inaccurate or incomplete because of
-          an error on our end, contact support and we&apos;ll fix it or make it right. We can&apos;t
-          guarantee the outcome of your county&apos;s independent review — no one honestly can — but
-          we stand behind the accuracy of what we generate.
-        </p>
       </Card>
     </>
   )
