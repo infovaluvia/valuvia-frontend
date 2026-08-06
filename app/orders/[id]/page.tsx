@@ -18,12 +18,19 @@ function formatDollars(cents: number | null | undefined) {
   })
 }
 
+function formatDate(isoDate: string) {
+  const parsed = new Date(isoDate)
+  if (Number.isNaN(parsed.getTime())) return isoDate
+  return parsed.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
 interface Comp {
   address: string
   sale_date: string
   price: number
   sqft: number
   price_per_sqft: number
+  stale?: boolean
 }
 
 interface Jurisdiction {
@@ -374,7 +381,14 @@ function CompsSection({
                 {comps.comps.map((c, i) => (
                   <tr key={i} className="border-b border-border last:border-0">
                     <Td>{c.address}</Td>
-                    <Td>{c.sale_date}</Td>
+                    <Td>
+                      {formatDate(c.sale_date)}
+                      {c.stale && (
+                        <span className="ml-1.5 rounded-full bg-warning-tint px-1.5 py-0.5 text-[0.7rem] font-medium text-warning">
+                          older sale
+                        </span>
+                      )}
+                    </Td>
                     <Td>{formatDollars(c.price * 100)}</Td>
                     <Td>{c.sqft}</Td>
                     <Td>{formatDollars(c.price_per_sqft * 100)}</Td>
@@ -383,6 +397,12 @@ function CompsSection({
               </tbody>
             </table>
           </div>
+          {comps.comps.some((c) => c.stale) && (
+            <p className="border-t border-border px-4 py-2.5 text-xs text-foreground-muted">
+              Comps marked &quot;older sale&quot; are more than 24 months old — included because no
+              more recent comparable sale was available nearby.
+            </p>
+          )}
         </Card>
       )}
     </>
