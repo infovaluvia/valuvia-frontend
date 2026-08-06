@@ -98,7 +98,15 @@ interface OrderData {
 }
 
 const VERDICT_COPY: Record<Screening['verdict'], { title: string; tone: 'success' | 'warning' | 'error' | 'info' }> = {
-  possible_candidate: { title: 'Worth pursuing', tone: 'info' },
+  // "possible_candidate" is the neutral default for any eligible
+  // property -- screening.py never touches comps here, so there is no
+  // actual evidence of overassessment behind it (verified live: a real
+  // property with real comps showing it's UNDER-assessed still lands
+  // here, since eligibility alone drives this verdict). "Worth
+  // pursuing" claimed a conclusion this verdict doesn't back up;
+  // "flagged_overassessed" below is the one verdict actually grounded
+  // in a real year-over-year assessment signal.
+  possible_candidate: { title: 'Eligible to check', tone: 'info' },
   flagged_overassessed: { title: 'Strong candidate', tone: 'success' },
   out_of_window: { title: 'Filing window issue', tone: 'warning' },
   not_supported: { title: 'Not supported yet', tone: 'error' },
