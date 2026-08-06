@@ -7,6 +7,7 @@ import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import PostPaymentDetailsForm from '@/components/orders/PostPaymentDetailsForm'
+import ReportOutcomeSection from '@/components/orders/ReportOutcomeSection'
 
 interface DocumentItem {
   kind: string
@@ -19,6 +20,8 @@ const TEXT_FIELD_META: Record<string, { label: string; type: string }> = {
   owner_email: { label: 'Owner email', type: 'email' },
 }
 
+type AppealOutcome = 'reduced' | 'unchanged' | 'denied' | 'withdrawn'
+
 export default function CheckoutSection({
   orderId,
   initialStatus,
@@ -27,6 +30,7 @@ export default function CheckoutSection({
   recommendedValueCents,
   filingFeeCents,
   countyName,
+  initialAppealOutcome,
 }: {
   orderId: string
   initialStatus: string
@@ -35,6 +39,7 @@ export default function CheckoutSection({
   recommendedValueCents?: number
   filingFeeCents?: number | null
   countyName?: string | null
+  initialAppealOutcome?: AppealOutcome | null
 }) {
   const router = useRouter()
 
@@ -166,6 +171,17 @@ export default function CheckoutSection({
     </label>
   )
 
+  const guaranteeFinePrint = (
+    <p className="mb-4 text-xs text-foreground-muted">
+      Full refund of Valuvia&apos;s $79 fee if your appeal doesn&apos;t reduce your assessment —
+      see the{' '}
+      <a href="/legal/refund" className="text-primary hover:underline">
+        Refund Guarantee Policy
+      </a>{' '}
+      for eligibility and how to claim it.
+    </p>
+  )
+
   async function handleCompletionSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
@@ -197,6 +213,7 @@ export default function CheckoutSection({
 
   if (documents) {
     return (
+      <>
       <Card className="mt-8 p-6 md:p-8">
         <h2 className="text-lg font-semibold text-foreground">Your Appeal Package</h2>
         {ownerFiled ? (
@@ -251,6 +268,11 @@ export default function CheckoutSection({
           Save your account
         </Button>
       </Card>
+
+      {ownerFiled && (
+        <ReportOutcomeSection orderId={orderId} initialOutcome={initialAppealOutcome ?? null} />
+      )}
+      </>
     )
   }
 
@@ -297,6 +319,7 @@ export default function CheckoutSection({
         <p className="mb-4 rounded-[var(--radius-sm)] bg-error-tint px-4 py-3 text-sm text-error">
           {error}
         </p>
+        {guaranteeFinePrint}
         {acknowledgementCheckbox}
         <Button onClick={handleBuyClick} className="w-full">
           Try again
@@ -311,6 +334,7 @@ export default function CheckoutSection({
         <p className="mb-4 text-sm text-foreground-muted">
           Checkout was cancelled — no charge was made.
         </p>
+        {guaranteeFinePrint}
         {acknowledgementCheckbox}
         <Button onClick={handleBuyClick} className="w-full">
           Try again — Unlock My Official Appeal Package ($79)
@@ -346,6 +370,7 @@ export default function CheckoutSection({
                 </div>
               )
             })}
+            {guaranteeFinePrint}
             {acknowledgementCheckbox}
             <Button type="submit" size="lg" className="w-full">
               Continue to Payment
@@ -357,6 +382,7 @@ export default function CheckoutSection({
 
     return (
       <div className="mt-8">
+        {guaranteeFinePrint}
         {acknowledgementCheckbox}
         <Button onClick={handleBuyClick} size="lg" className="w-full">
           Unlock My Official Appeal Package — $79

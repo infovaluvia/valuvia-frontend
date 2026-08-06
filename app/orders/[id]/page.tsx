@@ -64,6 +64,7 @@ interface OrderData {
     requested_value_cents: number | null
     estimated_savings_cents: number | null
     recommendation_json: Recommendation | null
+    appeal_outcome: 'reduced' | 'unchanged' | 'denied' | 'withdrawn' | null
   }
   comps: {
     source: string
@@ -189,6 +190,7 @@ export default async function OrderPage({
                     recommendedValueCents={verifiedMarketValueCents}
                     filingFeeCents={jurisdiction?.filing_fee_cents}
                     countyName={jurisdiction?.name}
+                    initialAppealOutcome={order.appeal_outcome}
                   />
                 </>
               )}
