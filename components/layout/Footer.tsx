@@ -51,7 +51,8 @@ export default function Footer() {
               <span className="text-sm font-bold text-foreground">Valuvia</span>
             </div>
             <p className="mt-3 max-w-[220px] text-sm text-foreground-muted">
-              Independent property assessment review for Santa Clara County, CA homeowners.
+              Independent property assessment review for homeowners in supported California and
+              Oregon counties.
             </p>
           </div>
 

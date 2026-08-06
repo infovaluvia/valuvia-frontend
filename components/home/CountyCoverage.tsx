@@ -1,18 +1,35 @@
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
+import { apiFetchServer } from "@/lib/api-server";
 
-const counties = [
-  {
-    name: "Santa Clara County, CA",
-    status: "active" as const,
-    window: "Filing window: Jul 2 – Sep 15",
-  },
-  { name: "Alameda County, CA", status: "coming" as const, window: "Coming soon" },
-  { name: "San Mateo County, CA", status: "coming" as const, window: "Coming soon" },
-  { name: "Los Angeles County, CA", status: "coming" as const, window: "Coming soon" },
-];
+interface Jurisdiction {
+  name: string;
+  filing_window_start: string | null;
+  filing_window_end: string | null;
+}
 
-export default function CountyCoverage() {
+function formatWindow(startIso: string | null, endIso: string | null): { label: string; open: boolean } {
+  if (!startIso || !endIso) return { label: "Filing window not yet confirmed", open: false };
+  const start = new Date(startIso);
+  const end = new Date(endIso);
+  const now = new Date();
+  const fmt = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return {
+    label: `Filing window: ${fmt(start)} – ${fmt(end)}`,
+    open: now >= start && now <= end,
+  };
+}
+
+export default async function CountyCoverage() {
+  let jurisdictions: Jurisdiction[] = [];
+  try {
+    jurisdictions = await apiFetchServer("/api/v1/jurisdictions");
+  } catch {
+    // Section just renders empty rather than breaking the homepage if
+    // the API is briefly unreachable -- coverage list, not critical path.
+  }
+  const sorted = [...jurisdictions].sort((a, b) => a.name.localeCompare(b.name));
+
   return (
     <section id="counties" className="bg-surface-alt py-16 md:py-24">
       <div className="mx-auto max-w-[1180px] px-6 md:px-8">
@@ -25,26 +42,22 @@ export default function CountyCoverage() {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-2">
-          {counties.map((c) => (
-            <Card
-              key={c.name}
-              className="flex items-center justify-between p-5"
-            >
-              <div>
-                <p className="text-sm font-semibold text-foreground">
-                  {c.name}
-                </p>
-                <p className="mt-0.5 text-xs text-foreground-muted">
-                  {c.window}
-                </p>
-              </div>
-              <Badge tone={c.status === "active" ? "success" : "neutral"}>
-                {c.status === "active" ? "Open now" : "Coming soon"}
-              </Badge>
-            </Card>
-          ))}
-        </div>
+        {sorted.length > 0 && (
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {sorted.map((c) => {
+              const { label, open } = formatWindow(c.filing_window_start, c.filing_window_end);
+              return (
+                <Card key={c.name} className="flex items-center justify-between p-5">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{c.name}</p>
+                    <p className="mt-0.5 text-xs text-foreground-muted">{label}</p>
+                  </div>
+                  <Badge tone={open ? "success" : "neutral"}>{open ? "Open now" : "Not open"}</Badge>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );
