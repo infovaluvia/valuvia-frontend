@@ -88,11 +88,12 @@ export default async function OrderPage({
   const { checkout } = await searchParams
   const data = (await apiFetchServer(`/api/v1/orders/${id}`)) as OrderData
   const { order, comps, jurisdiction, screening, missing_fields } = data
-  // comps.market_value_cents is the raw comps-service output and still
-  // carries a number on the demo-fallback path -- only requested_value_cents
-  // (nulled server-side unless comps.source === 'rentcast') is safe to
-  // pre-fill into a customer-facing "opinion of value" field.
-  const verifiedMarketValueCents = comps.source === 'rentcast' ? comps.market_value_cents : undefined
+  // comps.market_value_cents is the raw comps-service output and can carry
+  // a number even when there's no real evidence behind it (demo fallback,
+  // or a RentCast AVM estimate with zero verified comps) -- the backend
+  // already nulls order.requested_value_cents for exactly those cases, so
+  // reuse that instead of re-deriving the same fail-closed rule here.
+  const verifiedMarketValueCents = order.requested_value_cents ?? undefined
 
   return (
     <>
