@@ -10,6 +10,7 @@ import Input from '@/components/ui/Input'
 import MoneyInput, { sanitizeMoneyString } from '@/components/ui/MoneyInput'
 import Button from '@/components/ui/Button'
 import Field from '@/components/ui/Field'
+import PropertyPhoto from '@/components/intake/PropertyPhoto'
 import { COUNTY_ASSESSOR_LINKS, countyToSlug } from '@/lib/county-assessor-links'
 
 // Single-page intake: the only required field is the property address —
@@ -83,6 +84,7 @@ export default function IntakeForm({
   // the one signing the appeal application, not this lookup.
   const [assessorLookupLoading, setAssessorLookupLoading] = useState(false)
   const [assessorLookupApplied, setAssessorLookupApplied] = useState(false)
+  const [propertyLatLng, setPropertyLatLng] = useState<{ lat: number; lng: number } | null>(null)
 
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -96,6 +98,8 @@ export default function IntakeForm({
     setCodeApplied(false)
     setLeadCode(null)
     setCode('')
+    setPropertyLatLng(null)
+    setAssessorLookupApplied(false)
   }
 
   // Fired once, the moment this form is actually reached -- the funnel
@@ -104,13 +108,18 @@ export default function IntakeForm({
     track('screening_started')
   }, [])
 
-  // Load the Places library once.
+  // Load the Places library once. Falls back to the plain manual-entry
+  // address input below (placesLib stays null) if this fails for any
+  // reason -- a network issue, an ad-blocker, or the script simply not
+  // loading shouldn't surface as an unhandled promise rejection.
   useEffect(() => {
     let cancelled = false
-    loadGooglePlaces().then((places) => {
-      if (cancelled || !places) return
-      setPlacesLib(places)
-    })
+    loadGooglePlaces()
+      .then((places) => {
+        if (cancelled || !places) return
+        setPlacesLib(places)
+      })
+      .catch(() => {})
     return () => {
       cancelled = true
     }
@@ -156,7 +165,11 @@ export default function IntakeForm({
     setAssessorLookupLoading(true)
     apiFetch(`/api/v1/properties/lookup?address=${encodeURIComponent(situsAddress)}`)
       .then((snapshot) => {
-        if (cancelled || !snapshot?.assessed_value_cents) return
+        if (cancelled || !snapshot) return
+        if (snapshot.latitude != null && snapshot.longitude != null) {
+          setPropertyLatLng({ lat: snapshot.latitude, lng: snapshot.longitude })
+        }
+        if (!snapshot.assessed_value_cents) return
         setAssessedValue(sanitizeMoneyString((snapshot.assessed_value_cents / 100).toFixed(2)))
         if (snapshot.property_type) setPropertyType(snapshot.property_type)
         setAssessorLookupApplied(true)
@@ -441,6 +454,9 @@ export default function IntakeForm({
                       </Button>
                     </div>
                   </div>
+                )}
+                {propertyConfirmed && (
+                  <PropertyPhoto latitude={propertyLatLng?.lat} longitude={propertyLatLng?.lng} />
                 )}
               </div>
             ) : (
