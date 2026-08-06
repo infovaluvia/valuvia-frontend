@@ -177,6 +177,7 @@ export default function IntakeForm({
         if (snapshot.latitude != null && snapshot.longitude != null) {
           setPropertyLatLng({ lat: snapshot.latitude, lng: snapshot.longitude })
         }
+        if (snapshot.apn && !apn.trim()) setApn(snapshot.apn)
         if (!snapshot.assessed_value_cents) return
         setAssessedValue(sanitizeMoneyString((snapshot.assessed_value_cents / 100).toFixed(2)))
         if (snapshot.property_type) setPropertyType(snapshot.property_type)
