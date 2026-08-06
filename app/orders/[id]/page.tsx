@@ -88,6 +88,11 @@ export default async function OrderPage({
   const { checkout } = await searchParams
   const data = (await apiFetchServer(`/api/v1/orders/${id}`)) as OrderData
   const { order, comps, jurisdiction, screening, missing_fields } = data
+  // comps.market_value_cents is the raw comps-service output and still
+  // carries a number on the demo-fallback path -- only requested_value_cents
+  // (nulled server-side unless comps.source === 'rentcast') is safe to
+  // pre-fill into a customer-facing "opinion of value" field.
+  const verifiedMarketValueCents = comps.source === 'rentcast' ? comps.market_value_cents : undefined
 
   return (
     <>
@@ -160,7 +165,7 @@ export default async function OrderPage({
                   {(order.status === 'intake' || order.status === 'comps_review') && (
                     <>
                       <ApplicationPreview orderId={order.id} />
-                      <ConditionIntakeForm orderId={order.id} recommendedValueCents={comps.market_value_cents} />
+                      <ConditionIntakeForm orderId={order.id} recommendedValueCents={verifiedMarketValueCents} />
                     </>
                   )}
                   <PackagePreviewCard />
@@ -169,7 +174,7 @@ export default async function OrderPage({
                     initialStatus={order.status}
                     checkoutResult={checkout}
                     missingFields={missing_fields}
-                    recommendedValueCents={comps.market_value_cents}
+                    recommendedValueCents={verifiedMarketValueCents}
                     filingFeeCents={jurisdiction?.filing_fee_cents}
                     countyName={jurisdiction?.name}
                   />
