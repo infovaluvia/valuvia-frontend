@@ -217,8 +217,6 @@ export default function PreviewPackageGallery({
 
   return (
     <>
-      <h2 className="mt-10 text-lg font-semibold text-foreground">Your Appeal Package Preview</h2>
-
       {!sections && !error && (
         <Card className="mt-4 p-8 text-center">
           <div
