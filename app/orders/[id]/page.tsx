@@ -6,7 +6,6 @@ import Badge from '@/components/ui/Badge'
 import { apiFetchServer } from '@/lib/api-server'
 import CheckoutSection from '@/components/orders/CheckoutSection'
 import CompleteDetailsForm from '@/components/orders/CompleteDetailsForm'
-import ConditionIntakeForm from '@/components/orders/ConditionIntakeForm'
 
 function formatDollars(cents: number | null | undefined) {
   if (cents == null) return 'Data unavailable'
@@ -197,7 +196,7 @@ export default async function OrderPage({
               ) : (
                 <>
                   {order.recommendation_json?.recommendation === 'manual_review_required' && (
-                    <p className="mt-6 rounded-[var(--radius-sm)] bg-warning-tint px-4 py-3 text-sm text-warning">
+                    <p className="mt-6 rounded-[var(--radius-sm)] bg-warning-tint px-4 py-3 text-base text-warning">
                       This case needs a closer look before we can confirm an appeal is worth
                       pursuing — you can still purchase the package, and our team will review your
                       evidence before delivering it.
@@ -210,10 +209,10 @@ export default async function OrderPage({
                       className="mt-6 flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-primary/25 bg-primary-tint px-5 py-4 transition hover:border-primary/50"
                     >
                       <span>
-                        <span className="block text-base font-semibold text-foreground">
+                        <span className="block text-lg font-semibold text-foreground">
                           See your full appeal package preview
                         </span>
-                        <span className="mt-0.5 block text-sm text-foreground-muted">
+                        <span className="mt-0.5 block text-base text-foreground-muted">
                           Every page of every volume, watermarked — see exactly what you&apos;re buying
                         </span>
                       </span>
@@ -222,7 +221,20 @@ export default async function OrderPage({
                   )}
 
                   {inCheckoutFlow && (
-                    <ConditionIntakeForm orderId={order.id} recommendedValueCents={verifiedMarketValueCents} />
+                    <Link
+                      href={`/orders/${order.id}/condition`}
+                      className="mt-4 flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-border bg-surface-alt px-5 py-4 transition hover:border-primary/40"
+                    >
+                      <span>
+                        <span className="block text-lg font-semibold text-foreground">
+                          Add property condition
+                        </span>
+                        <span className="mt-0.5 block text-base text-foreground-muted">
+                          Optional — strengthens your case with your own opinion of value and photos
+                        </span>
+                      </span>
+                      <ArrowRightIcon />
+                    </Link>
                   )}
 
                   <CheckoutSection
@@ -297,7 +309,7 @@ function ProcessCard({
     <>
       <h3 className="mt-8 text-base font-semibold text-foreground">How the Appeal Process Works</h3>
       <Card className="mt-4 p-6 md:p-8">
-        <ol className="space-y-3 text-sm text-foreground">
+        <ol className="space-y-3 text-base text-foreground">
           <li>
             <b>1. Filing window:</b>{' '}
             {jurisdiction.filing_window_start && jurisdiction.filing_window_end
@@ -421,7 +433,7 @@ function CompsSection({
       ) : (
         <Card className="mt-4 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-sm">
+            <table className="w-full min-w-[560px] text-base">
               <thead>
                 <tr className="border-b border-border bg-surface-alt">
                   <Th>Address</Th>
@@ -486,7 +498,7 @@ function ArrowRightIcon() {
 
 function Th({ children }: { children: React.ReactNode }) {
   return (
-    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground-muted">
+    <th className="px-4 py-3 text-left text-sm font-semibold text-foreground-muted">
       {children}
     </th>
   )

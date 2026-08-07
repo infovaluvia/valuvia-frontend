@@ -207,6 +207,14 @@ export default function IntakeForm({
         // doesn't publish assessment data.
         if (snapshot.county && !county.trim()) setCounty(snapshot.county)
         if (snapshot.state && !state.trim()) setState(snapshot.state)
+        // Real public-record data (see assessor_lookup.py) -- the
+        // owner of record, which may be an LLC/trust, not necessarily
+        // today's site visitor, so this only ever pre-fills an
+        // editable field, same as everything else here. No phone
+        // number is ever included -- RentCast's schema has no such
+        // field, so there's nothing to auto-fill it from.
+        if (snapshot.owner_name && !ownerName.trim()) setOwnerName(snapshot.owner_name)
+        if (snapshot.owner_occupied != null) setOccupied(snapshot.owner_occupied ? 'yes' : 'no')
         if (!snapshot.assessed_value_cents) return
         setAssessedValue(sanitizeMoneyString((snapshot.assessed_value_cents / 100).toFixed(2)))
         if (snapshot.property_type) setPropertyType(snapshot.property_type)
