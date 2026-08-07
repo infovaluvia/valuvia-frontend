@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Card from '@/components/ui/Card'
@@ -5,7 +6,6 @@ import Badge from '@/components/ui/Badge'
 import { apiFetchServer } from '@/lib/api-server'
 import CheckoutSection from '@/components/orders/CheckoutSection'
 import CompleteDetailsForm from '@/components/orders/CompleteDetailsForm'
-import PreviewPackageGallery from '@/components/orders/PreviewPackageGallery'
 import ConditionIntakeForm from '@/components/orders/ConditionIntakeForm'
 
 function formatDollars(cents: number | null | undefined) {
@@ -130,6 +130,13 @@ export default async function OrderPage({
   // reuse that instead of re-deriving the same fail-closed rule here.
   const verifiedMarketValueCents = order.requested_value_cents ?? undefined
 
+  // Kept as a boolean rather than inlined three times below -- it
+  // gates both the checkout-time flow (preview link + condition intake)
+  // and, further down, whether the package-preview link even makes
+  // sense to show at all (an already-paid order has no more "preview
+  // before you buy" step left).
+  const inCheckoutFlow = order.status === 'intake' || order.status === 'comps_review'
+
   return (
     <>
       <Navbar />
@@ -138,13 +145,13 @@ export default async function OrderPage({
           <p className="text-center text-xs font-semibold uppercase tracking-wide text-primary">
             Step 2 of 3 — Your recommendation
           </p>
-          <h1 className="mt-2 text-center text-2xl font-bold text-foreground md:text-3xl">
+          <h1 className="mt-2 text-center text-3xl font-bold text-foreground md:text-4xl">
             Your Recommendation
           </h1>
 
           {!screening ? (
             <>
-              <Card className="mt-6 p-6 text-center text-sm text-foreground-muted md:p-8">
+              <Card className="mt-6 p-6 text-center text-base text-foreground-muted md:p-8">
                 Add your assessed value below to see whether your property is worth appealing.
               </Card>
               <CompleteDetailsForm
@@ -157,12 +164,12 @@ export default async function OrderPage({
             <>
               <RecommendationCard screening={screening} />
 
-              {jurisdiction && (
-                <ProcessCard jurisdiction={jurisdiction} formatDollars={formatDollars} timeline={timeline_estimate} />
-              )}
-
+              {/* The three numbers that actually answer "is this worth it" --
+                  kept as the very next thing after the verdict, ahead of any
+                  supporting detail, since that's the order a reader actually
+                  needs them in to decide whether to keep reading. */}
               <Card className="mt-6 p-6 md:p-8">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
                   <Stat label="Assessed value" value={formatDollars(order.assessed_value_cents)} />
                   <Stat
                     label="Estimated market value"
@@ -176,18 +183,12 @@ export default async function OrderPage({
                 </div>
               </Card>
 
-              {savings_estimate && <SavingsBreakdownCard estimate={savings_estimate} formatDollars={formatDollars} />}
-
-              {comps.source !== 'unsupported' && (
-                <CompsSection comps={comps} formatDollars={formatDollars} />
-              )}
-
               {screening.verdict === 'not_supported' ? (
-                <Card className="mt-8 p-6 text-center text-sm text-foreground-muted md:p-8">
+                <Card className="mt-8 p-6 text-center text-base text-foreground-muted md:p-8">
                   We&apos;ll email you as soon as we support appeals in your county.
                 </Card>
               ) : order.recommendation_json?.recommendation === 'not_recommended' ? (
-                <Card className="mt-8 p-6 text-center text-sm text-foreground-muted md:p-8">
+                <Card className="mt-8 p-6 text-center text-base text-foreground-muted md:p-8">
                   Based on available market evidence, an appeal doesn&apos;t currently appear
                   economically reasonable for this property, so we&apos;re not able to sell the
                   appeal package for it. If your assessed value or comparable sales change, come
@@ -202,17 +203,28 @@ export default async function OrderPage({
                       evidence before delivering it.
                     </p>
                   )}
-                  {(order.status === 'intake' || order.status === 'comps_review') && (
-                    <>
-                      <PreviewPackageGallery
-                        orderId={order.id}
-                        estimatedSavingsCents={order.estimated_savings_cents}
-                        requestedValueCents={order.requested_value_cents}
-                        comparableCount={comps.comps?.length ?? 0}
-                      />
-                      <ConditionIntakeForm orderId={order.id} recommendedValueCents={verifiedMarketValueCents} />
-                    </>
+
+                  {inCheckoutFlow && (
+                    <Link
+                      href={`/orders/${order.id}/preview`}
+                      className="mt-6 flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-primary/25 bg-primary-tint px-5 py-4 transition hover:border-primary/50"
+                    >
+                      <span>
+                        <span className="block text-base font-semibold text-foreground">
+                          See your full appeal package preview
+                        </span>
+                        <span className="mt-0.5 block text-sm text-foreground-muted">
+                          Every page of every volume, watermarked — see exactly what you&apos;re buying
+                        </span>
+                      </span>
+                      <ArrowRightIcon />
+                    </Link>
                   )}
+
+                  {inCheckoutFlow && (
+                    <ConditionIntakeForm orderId={order.id} recommendedValueCents={verifiedMarketValueCents} />
+                  )}
+
                   <CheckoutSection
                     orderId={order.id}
                     initialStatus={order.status}
@@ -225,6 +237,23 @@ export default async function OrderPage({
                   />
                 </>
               )}
+
+              {/* Supporting detail -- real and important, but secondary to
+                  the decision above, so it lives below the fold instead of
+                  pushing checkout down past several screens of tables. */}
+              <div className="mt-14 border-t border-border pt-10">
+                <h2 className="text-base font-semibold text-foreground-muted">More detail</h2>
+
+                {savings_estimate && <SavingsBreakdownCard estimate={savings_estimate} formatDollars={formatDollars} />}
+
+                {comps.source !== 'unsupported' && (
+                  <CompsSection comps={comps} formatDollars={formatDollars} />
+                )}
+
+                {jurisdiction && (
+                  <ProcessCard jurisdiction={jurisdiction} formatDollars={formatDollars} timeline={timeline_estimate} />
+                )}
+              </div>
             </>
           )}
         </div>
@@ -243,7 +272,7 @@ function RecommendationCard({ screening }: { screening: Screening }) {
       </div>
       <ul className="mt-4 space-y-2">
         {screening.reasons.map((reason, i) => (
-          <li key={i} className="text-sm text-foreground">
+          <li key={i} className="text-base text-foreground">
             {reason}
           </li>
         ))}
@@ -266,7 +295,7 @@ function ProcessCard({
 }) {
   return (
     <>
-      <h2 className="mt-10 text-lg font-semibold text-foreground">How the Appeal Process Works</h2>
+      <h3 className="mt-8 text-base font-semibold text-foreground">How the Appeal Process Works</h3>
       <Card className="mt-4 p-6 md:p-8">
         <ol className="space-y-3 text-sm text-foreground">
           <li>
@@ -335,8 +364,8 @@ function SavingsBreakdownCard({
   formatDollars: (cents: number | null | undefined) => string
 }) {
   return (
-    <Card className="mt-6 p-6 md:p-8">
-      <h3 className="text-base font-semibold text-foreground">Savings Breakdown</h3>
+    <Card className="mt-4 p-6 md:p-8">
+      <h4 className="text-sm font-semibold text-foreground-muted">Savings Breakdown</h4>
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Stat label="Valuvia's fee" value={formatDollars(estimate.valuvia_fee_cents)} />
         <Stat label="County filing fee" value={formatDollars(estimate.filing_fee_cents)} />
@@ -360,7 +389,7 @@ function CompsSection({
 }) {
   return (
     <>
-      <h2 className="mt-10 text-lg font-semibold text-foreground">Comparable Properties</h2>
+      <h3 className="mt-8 text-base font-semibold text-foreground">Comparable Properties</h3>
       {comps.source !== 'demo' && comps.source !== 'verified' && (
         <p className="mt-2 rounded-[var(--radius-sm)] bg-warning-tint px-4 py-3 text-sm text-warning">
           These figures come from an automated market estimate and are not independently
@@ -437,13 +466,21 @@ function CompsSection({
 function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
     <div>
-      <div className="text-xs text-foreground-muted">{label}</div>
+      <div className="text-sm text-foreground-muted">{label}</div>
       <div
-        className={`mt-1 text-xl font-bold ${highlight ? 'text-accent-green' : 'text-foreground'}`}
+        className={`mt-1 text-2xl font-bold ${highlight ? 'text-accent-green' : 'text-foreground'}`}
       >
         {value}
       </div>
     </div>
+  )
+}
+
+function ArrowRightIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 flex-shrink-0 text-primary">
+      <path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   )
 }
 
