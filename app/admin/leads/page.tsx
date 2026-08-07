@@ -73,9 +73,12 @@ export default async function AdminLeadsPage() {
                 real test of whether the scoring is worth trusting — not just how many leads exist.
               </p>
             </div>
-            <Button href="/admin" variant="secondary">
-              Back to Admin
-            </Button>
+            <div className="flex gap-2">
+              <Button href="/admin/leads/upload">Upload Leads</Button>
+              <Button href="/admin" variant="secondary">
+                Back to Admin
+              </Button>
+            </div>
           </div>
 
           {error ? (
