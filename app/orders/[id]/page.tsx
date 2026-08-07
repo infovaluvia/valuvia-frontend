@@ -179,6 +179,15 @@ export default async function OrderPage({
             <>
               <RecommendationCard screening={screening} />
 
+              {inCheckoutFlow && (
+                <a
+                  href="#checkout"
+                  className="mt-4 block text-center text-sm font-semibold text-primary hover:underline"
+                >
+                  Unlock My Official Appeal Package — $79 ↓
+                </a>
+              )}
+
               {/* The three numbers that actually answer "is this worth it" --
                   kept as the very next thing after the verdict, ahead of any
                   supporting detail, since that's the order a reader actually
@@ -189,11 +198,13 @@ export default async function OrderPage({
                   <Stat
                     label="Estimated market value"
                     value={formatDollars(order.requested_value_cents)}
+                    preliminary={order.recommendation_json?.recommendation === 'manual_review_required'}
                   />
                   <Stat
                     label="Estimated savings"
                     value={formatDollars(order.estimated_savings_cents)}
-                    highlight
+                    highlight={order.recommendation_json?.recommendation !== 'manual_review_required'}
+                    preliminary={order.recommendation_json?.recommendation === 'manual_review_required'}
                   />
                 </div>
               </Card>
@@ -222,6 +233,8 @@ export default async function OrderPage({
                   {inCheckoutFlow && (
                     <Link
                       href={`/orders/${order.id}/preview`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="mt-6 flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-primary/25 bg-primary-tint px-5 py-4 transition hover:border-primary/50"
                     >
                       <span>
@@ -229,11 +242,20 @@ export default async function OrderPage({
                           See your full appeal package preview
                         </span>
                         <span className="mt-0.5 block text-base text-foreground-muted">
-                          Every page of every volume, watermarked — see exactly what you&apos;re buying
+                          Every page of every volume, watermarked — opens in a new tab
                         </span>
                       </span>
                       <ArrowRightIcon />
                     </Link>
+                  )}
+
+                  {inCheckoutFlow && (
+                    <a
+                      href="#checkout"
+                      className="mt-3 block text-center text-sm font-semibold text-primary hover:underline"
+                    >
+                      Unlock My Official Appeal Package — $79 ↓
+                    </a>
                   )}
 
                   {inCheckoutFlow && (
@@ -253,6 +275,7 @@ export default async function OrderPage({
                     </Link>
                   )}
 
+                  <div id="checkout">
                   <CheckoutSection
                     orderId={order.id}
                     initialStatus={order.status}
@@ -264,6 +287,7 @@ export default async function OrderPage({
                     initialAppealOutcome={order.appeal_outcome}
                     intake={order.intake_json}
                   />
+                  </div>
                 </>
               )}
 
@@ -492,15 +516,36 @@ function CompsSection({
   )
 }
 
-function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function Stat({
+  label,
+  value,
+  highlight,
+  preliminary,
+}: {
+  label: string
+  value: string
+  highlight?: boolean
+  // Real gap found via live testing: a manual-review case can still
+  // carry a real, non-null computed value (e.g. too few comps were
+  // accepted to be confident, not zero) -- showing that number with
+  // the exact same styling as a normal high-confidence case makes it
+  // look more certain than it is. This keeps the number visible (the
+  // property is still eligible to check) but visually qualifies it.
+  preliminary?: boolean
+}) {
   return (
     <div>
-      <div className="text-sm text-foreground-muted">{label}</div>
+      <div className="text-sm text-foreground-muted">{label}{preliminary ? ' (preliminary)' : ''}</div>
       <div
-        className={`mt-1 text-2xl font-bold ${highlight ? 'text-accent-green' : 'text-foreground'}`}
+        className={`mt-1 text-2xl font-bold ${
+          preliminary ? 'text-foreground-muted' : highlight ? 'text-accent-green' : 'text-foreground'
+        }`}
       >
         {value}
       </div>
+      {preliminary && (
+        <div className="mt-0.5 text-xs text-foreground-muted">Under review — not yet confirmed</div>
+      )}
     </div>
   )
 }
