@@ -23,6 +23,8 @@ interface ContactIntake {
   mailing_zip?: string | null
   owner_alternate_phone?: string | null
   owner_fax?: string | null
+  requests_written_findings?: string | null
+  claim_for_refund?: string | null
 }
 
 // UI Redesign Master Plan §6.4/§6.5: property-condition context and the
@@ -65,6 +67,8 @@ export default function ConditionIntakeForm({
   const [alternatePhoneTouched, setAlternatePhoneTouched] = useState(false)
   const [fax, setFax] = useState(formatPhoneInput(intake?.owner_fax ?? ''))
   const [faxTouched, setFaxTouched] = useState(false)
+  const [writtenFindings, setWrittenFindings] = useState(intake?.requests_written_findings ?? '')
+  const [claimForRefund, setClaimForRefund] = useState(intake?.claim_for_refund ?? '')
 
   useEffect(() => {
     track('condition_step_started')
@@ -117,6 +121,8 @@ export default function ConditionIntakeForm({
       if (ownerPhone.trim()) body.owner_phone = ownerPhone.trim()
       if (alternatePhone.trim()) body.owner_alternate_phone = alternatePhone.trim()
       if (fax.trim()) body.owner_fax = fax.trim()
+      if (writtenFindings) body.requests_written_findings = writtenFindings
+      if (claimForRefund) body.claim_for_refund = claimForRefund
 
       if (Object.keys(body).length > 0) {
         await apiFetch(`/api/v1/orders/${orderId}`, { method: 'PATCH', body: JSON.stringify(body) })
@@ -215,6 +221,59 @@ export default function ConditionIntakeForm({
               value={mailingZip}
               onChange={(e) => { setMailingZip(e.target.value); setSaved(false) }}
             />
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <label className="mb-1.5 block text-sm font-medium text-foreground">
+            Request written findings of fact? (an extra county fee applies, paid to the county — see
+            your application for the amount)
+          </label>
+          <div className="flex gap-4 text-sm text-foreground">
+            <label className="flex items-center gap-1.5">
+              <input
+                type="radio"
+                name="written-findings"
+                checked={writtenFindings === 'yes'}
+                onChange={() => { setWrittenFindings('yes'); setSaved(false) }}
+              />
+              Yes
+            </label>
+            <label className="flex items-center gap-1.5">
+              <input
+                type="radio"
+                name="written-findings"
+                checked={writtenFindings === 'no'}
+                onChange={() => { setWrittenFindings('no'); setSaved(false) }}
+              />
+              No
+            </label>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <label className="mb-1.5 block text-sm font-medium text-foreground">
+            Designate this application as a claim for refund?
+          </label>
+          <div className="flex gap-4 text-sm text-foreground">
+            <label className="flex items-center gap-1.5">
+              <input
+                type="radio"
+                name="claim-for-refund"
+                checked={claimForRefund === 'yes'}
+                onChange={() => { setClaimForRefund('yes'); setSaved(false) }}
+              />
+              Yes
+            </label>
+            <label className="flex items-center gap-1.5">
+              <input
+                type="radio"
+                name="claim-for-refund"
+                checked={claimForRefund === 'no'}
+                onChange={() => { setClaimForRefund('no'); setSaved(false) }}
+              />
+              No
+            </label>
           </div>
         </div>
       </div>
