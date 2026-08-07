@@ -25,6 +25,7 @@ interface ContactIntake {
   owner_fax?: string | null
   requests_written_findings?: string | null
   claim_for_refund?: string | null
+  hearing_type?: string | null
 }
 
 // UI Redesign Master Plan §6.4/§6.5: property-condition context and the
@@ -39,10 +40,15 @@ export default function ConditionIntakeForm({
   orderId,
   recommendedValueCents,
   intake,
+  showHearingType,
 }: {
   orderId: string
   recommendedValueCents?: number
   intake?: ContactIntake
+  // Only Ventura's 2026 form has this question -- shown only for
+  // orders in that county rather than unconditionally, since filling
+  // it in does nothing for every other county's application.
+  showHearingType?: boolean
 }) {
   const [opinionOfValue, setOpinionOfValue] = useState(
     recommendedValueCents ? (recommendedValueCents / 100).toFixed(2) : ''
@@ -69,6 +75,7 @@ export default function ConditionIntakeForm({
   const [faxTouched, setFaxTouched] = useState(false)
   const [writtenFindings, setWrittenFindings] = useState(intake?.requests_written_findings ?? '')
   const [claimForRefund, setClaimForRefund] = useState(intake?.claim_for_refund ?? '')
+  const [hearingType, setHearingType] = useState(intake?.hearing_type ?? '')
 
   useEffect(() => {
     track('condition_step_started')
@@ -123,6 +130,7 @@ export default function ConditionIntakeForm({
       if (fax.trim()) body.owner_fax = fax.trim()
       if (writtenFindings) body.requests_written_findings = writtenFindings
       if (claimForRefund) body.claim_for_refund = claimForRefund
+      if (hearingType) body.hearing_type = hearingType
 
       if (Object.keys(body).length > 0) {
         await apiFetch(`/api/v1/orders/${orderId}`, { method: 'PATCH', body: JSON.stringify(body) })
@@ -276,6 +284,39 @@ export default function ConditionIntakeForm({
             </label>
           </div>
         </div>
+
+        {showHearingType && (
+          <div className="mt-4">
+            <label className="mb-1.5 block text-sm font-medium text-foreground">
+              Hearing type
+            </label>
+            <p className="mt-1 text-xs text-foreground-muted">
+              Assessment Appeals Board (three-member board, required if you requested written
+              findings) or Hearing Officer (single officer, only available if your assessed value
+              is under $500,000 — findings of fact can&apos;t be requested).
+            </p>
+            <div className="mt-2 flex gap-4 text-sm text-foreground">
+              <label className="flex items-center gap-1.5">
+                <input
+                  type="radio"
+                  name="hearing-type"
+                  checked={hearingType === 'board'}
+                  onChange={() => { setHearingType('board'); setSaved(false) }}
+                />
+                Assessment Appeals Board
+              </label>
+              <label className="flex items-center gap-1.5">
+                <input
+                  type="radio"
+                  name="hearing-type"
+                  checked={hearingType === 'officer'}
+                  onChange={() => { setHearingType('officer'); setSaved(false) }}
+                />
+                Hearing Officer
+              </label>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="mt-6">

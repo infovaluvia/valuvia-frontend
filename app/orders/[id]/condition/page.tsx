@@ -28,10 +28,12 @@ export default async function OrderConditionPage({
         owner_fax?: string | null
         requests_written_findings?: string | null
         claim_for_refund?: string | null
+        hearing_type?: string | null
       }
     }
+    jurisdiction: { county: string } | null
   }
-  const { order } = data
+  const { order, jurisdiction } = data
 
   return (
     <>
@@ -57,6 +59,7 @@ export default async function OrderConditionPage({
             orderId={order.id}
             recommendedValueCents={order.requested_value_cents ?? undefined}
             intake={order.intake_json}
+            showHearingType={jurisdiction?.county === 'ventura'}
           />
         </div>
       </main>
