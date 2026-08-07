@@ -22,6 +22,20 @@ const TEXT_FIELD_META: Record<string, { label: string; type: string }> = {
 
 type AppealOutcome = 'reduced' | 'unchanged' | 'denied' | 'withdrawn'
 
+interface PostPaymentIntake {
+  owner_name?: string | null
+  owner_email?: string | null
+  owner_phone?: string | null
+  mailing_street?: string | null
+  mailing_city?: string | null
+  mailing_state?: string | null
+  mailing_zip?: string | null
+  owner_alternate_phone?: string | null
+  owner_fax?: string | null
+  requests_written_findings?: string | null
+  claim_for_refund?: string | null
+}
+
 export default function CheckoutSection({
   orderId,
   initialStatus,
@@ -31,6 +45,7 @@ export default function CheckoutSection({
   filingFeeCents,
   countyName,
   initialAppealOutcome,
+  intake,
 }: {
   orderId: string
   initialStatus: string
@@ -40,6 +55,7 @@ export default function CheckoutSection({
   filingFeeCents?: number | null
   countyName?: string | null
   initialAppealOutcome?: AppealOutcome | null
+  intake?: PostPaymentIntake
 }) {
   const router = useRouter()
 
@@ -281,6 +297,7 @@ export default function CheckoutSection({
       <PostPaymentDetailsForm
         orderId={orderId}
         recommendedValueCents={recommendedValueCents}
+        intake={intake}
         onSubmittedForReview={() => {
           setShowPostPaymentForm(false)
           setStatus('qa_pending')

@@ -81,6 +81,22 @@ interface OrderData {
     estimated_savings_cents: number | null
     recommendation_json: Recommendation | null
     appeal_outcome: 'reduced' | 'unchanged' | 'denied' | 'withdrawn' | null
+    // Only the fields the post-payment "fill in anything still missing"
+    // step cares about -- the real intake_json has more, but this page
+    // only needs to know what to prompt for.
+    intake_json: {
+      owner_name?: string | null
+      owner_email?: string | null
+      owner_phone?: string | null
+      mailing_street?: string | null
+      mailing_city?: string | null
+      mailing_state?: string | null
+      mailing_zip?: string | null
+      owner_alternate_phone?: string | null
+      owner_fax?: string | null
+      requests_written_findings?: string | null
+      claim_for_refund?: string | null
+    }
   }
   comps: {
     source: string
@@ -246,6 +262,7 @@ export default async function OrderPage({
                     filingFeeCents={jurisdiction?.filing_fee_cents}
                     countyName={jurisdiction?.name}
                     initialAppealOutcome={order.appeal_outcome}
+                    intake={order.intake_json}
                   />
                 </>
               )}
