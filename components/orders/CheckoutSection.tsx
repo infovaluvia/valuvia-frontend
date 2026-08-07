@@ -62,6 +62,17 @@ export default function CheckoutSection({
   const [status, setStatus] = useState(initialStatus)
   const [documents, setDocuments] = useState<DocumentItem[] | null>(null)
   const [showPostPaymentForm, setShowPostPaymentForm] = useState(false)
+  const [addingMissingDetails, setAddingMissingDetails] = useState(false)
+  // A package generated before the customer filled these in (or before
+  // this fix shipped) stays stale forever otherwise -- generate is safe
+  // to call again any time after payment (see documents.py), so this
+  // just reopens the same optional form and re-generates.
+  const hasAnyMissingDetail = Boolean(
+    intake &&
+      (!intake.mailing_street || !intake.owner_name || !intake.owner_email || !intake.owner_phone ||
+        !intake.owner_alternate_phone || !intake.owner_fax || !intake.requests_written_findings ||
+        !intake.claim_for_refund)
+  )
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [checkingReview, setCheckingReview] = useState(false)
@@ -227,11 +238,40 @@ export default function CheckoutSection({
     )
   }
 
+  if (documents && addingMissingDetails) {
+    return (
+      <PostPaymentDetailsForm
+        orderId={orderId}
+        recommendedValueCents={recommendedValueCents}
+        intake={intake}
+        onSubmittedForReview={() => {
+          setAddingMissingDetails(false)
+          setDocuments(null)
+          setStatus('qa_pending')
+        }}
+      />
+    )
+  }
+
   if (documents) {
     return (
       <>
       <Card className="mt-8 p-6 md:p-8">
         <h2 className="text-lg font-semibold text-foreground">Your Appeal Package</h2>
+        {hasAnyMissingDetail && (
+          <p className="mt-3 rounded-[var(--radius-sm)] bg-warning-tint px-4 py-3 text-sm text-warning">
+            Your application is missing some optional details (mailing address, contact info, or
+            filing elections).{' '}
+            <button
+              type="button"
+              onClick={() => setAddingMissingDetails(true)}
+              className="font-semibold underline"
+            >
+              Add them now and update your package
+            </button>
+            .
+          </p>
+        )}
         {ownerFiled ? (
           <p className="mt-3 rounded-[var(--radius-sm)] bg-success-tint px-4 py-3 text-sm font-medium text-success">
             Filed by owner — customer reported. Valuvia did not file this on your behalf; you told
