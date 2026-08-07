@@ -47,6 +47,13 @@ export default function IntakeForm({
   const [state, setState] = useState('')
   const [parsedAddress, setParsedAddress] = useState<ParsedAddress | null>(null)
   const [placesLib, setPlacesLib] = useState<typeof google.maps.places | null>(null)
+  // Lets someone type and confirm an address Google Places doesn't
+  // recognize (a genuinely new build, a rural route, or -- see
+  // docs/phase4/static_test_dataset_human_manual.md -- a static test
+  // fixture address) without waiting for the Places script to fail to
+  // load first, which was previously the ONLY way to reach the manual
+  // <Input> fallback below.
+  const [manualAddressEntry, setManualAddressEntry] = useState(false)
   // The address is "confirmed" (shown as a static chip instead of the
   // live search box) once it's been set by a Places selection or by OCR
   // — this is what actually makes autofill visible, since the Places
@@ -108,6 +115,7 @@ export default function IntakeForm({
     setCode('')
     setPropertyLatLng(null)
     setAssessorLookupApplied(false)
+    setManualAddressEntry(false)
   }
 
   // Fired once, the moment this form is actually reached -- the funnel
@@ -398,18 +406,31 @@ export default function IntakeForm({
               </div>
             ) : (
               <>
-                <div ref={addressContainerRef} aria-labelledby={addressLabelId} className={placesLib ? '' : 'hidden'} />
-                {!placesLib && (
+                <div
+                  ref={addressContainerRef}
+                  aria-labelledby={addressLabelId}
+                  className={placesLib && !manualAddressEntry ? '' : 'hidden'}
+                />
+                {(!placesLib || manualAddressEntry) && (
                   <Input
                     aria-labelledby={addressLabelId}
                     type="text"
                     value={situsAddress}
                     onChange={(e) => setSitusAddress(e.target.value)}
                     onBlur={() => situsAddress.trim() && setAddressConfirmed(true)}
-                    placeholder="Start typing your address…"
+                    placeholder="Type your full address…"
                     autoComplete="off"
                     className="h-14 text-lg"
                   />
+                )}
+                {placesLib && !manualAddressEntry && (
+                  <button
+                    type="button"
+                    onClick={() => setManualAddressEntry(true)}
+                    className="mt-2 text-xs font-semibold text-primary hover:underline"
+                  >
+                    Can&apos;t find your address? Enter it manually
+                  </button>
                 )}
               </>
             )}
