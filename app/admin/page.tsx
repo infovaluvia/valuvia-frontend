@@ -98,9 +98,14 @@ export default async function AdminPage() {
         <div className="mx-auto max-w-[1180px] px-6 md:px-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-2xl font-bold text-foreground md:text-3xl">Admin</h1>
-            <Button href="/admin/qa" variant="secondary">
-              QA Review Queue
-            </Button>
+            <div className="flex gap-2">
+              <Button href="/admin/leads" variant="secondary">
+                Lead Quality
+              </Button>
+              <Button href="/admin/qa" variant="secondary">
+                QA Review Queue
+              </Button>
+            </div>
           </div>
 
           {error ? (
