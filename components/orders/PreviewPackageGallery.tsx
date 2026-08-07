@@ -1,8 +1,20 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type React from 'react'
 import { apiFetch } from '@/lib/api'
 import Card from '@/components/ui/Card'
+
+const MIN_ZOOM = 1
+const MAX_ZOOM = 4
+
+function clampZoom(z: number) {
+  return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z))
+}
+
+function distance(a: React.Touch, b: React.Touch) {
+  return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
+}
 
 interface PreviewSection {
   kind: string
@@ -58,6 +70,16 @@ export default function PreviewPackageGallery({
   // next/prev can walk both the current volume's pages and, once at
   // either end, straight into the next/previous volume.
   const [lightbox, setLightbox] = useState<{ sectionIndex: number; pageIndex: number } | null>(null)
+  const [zoom, setZoom] = useState(1)
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  // Tracks drag/pinch start positions -- read only from event handlers,
+  // never during render (a ref read during render can silently miss
+  // updates). `isInteracting` (real state, not a ref) is what render
+  // reads instead, purely to skip the CSS transition while actively
+  // dragging/pinching.
+  const dragState = useRef<{ startX: number; startY: number; panX: number; panY: number } | null>(null)
+  const pinchState = useRef<{ startDistance: number; startZoom: number } | null>(null)
+  const [isInteracting, setIsInteracting] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -87,7 +109,20 @@ export default function PreviewPackageGallery({
   // adjacent volume once the current one's pages run out -- so a
   // reader can flip through the whole package without closing and
   // reopening it volume by volume.
+  // Resets zoom/pan too -- called on every page change (including
+  // opening a fresh page) so a zoomed-in view never carries over to the
+  // next page, which would read as broken rather than intentional.
+  // Done at each call site rather than via a reactive effect keyed off
+  // `lightbox`, since setState-during-effect is best avoided when the
+  // handful of places `lightbox` actually changes can just reset it
+  // directly instead.
+  function resetZoom() {
+    setZoom(1)
+    setPan({ x: 0, y: 0 })
+  }
+
   function step(direction: 1 | -1) {
+    resetZoom()
     setLightbox((current) => {
       if (!current || !sections) return current
       const section = sections[current.sectionIndex]
@@ -105,10 +140,71 @@ export default function PreviewPackageGallery({
     })
   }
 
+  function zoomBy(factor: number) {
+    setZoom((z) => {
+      const next = clampZoom(z * factor)
+      if (next === MIN_ZOOM) setPan({ x: 0, y: 0 })
+      return next
+    })
+  }
+
+  function onWheel(e: React.WheelEvent) {
+    e.preventDefault()
+    zoomBy(e.deltaY < 0 ? 1.2 : 1 / 1.2)
+  }
+
+  function onMouseDown(e: React.MouseEvent) {
+    if (zoom === MIN_ZOOM) return
+    dragState.current = { startX: e.clientX, startY: e.clientY, panX: pan.x, panY: pan.y }
+    setIsInteracting(true)
+  }
+
+  function onMouseMove(e: React.MouseEvent) {
+    if (!dragState.current) return
+    const { startX, startY, panX, panY } = dragState.current
+    setPan({ x: panX + (e.clientX - startX), y: panY + (e.clientY - startY) })
+  }
+
+  function onMouseUp() {
+    dragState.current = null
+    setIsInteracting(false)
+  }
+
+  function onTouchStart(e: React.TouchEvent) {
+    if (e.touches.length === 2) {
+      pinchState.current = { startDistance: distance(e.touches[0], e.touches[1]), startZoom: zoom }
+      setIsInteracting(true)
+    } else if (e.touches.length === 1 && zoom > MIN_ZOOM) {
+      const t = e.touches[0]
+      dragState.current = { startX: t.clientX, startY: t.clientY, panX: pan.x, panY: pan.y }
+      setIsInteracting(true)
+    }
+  }
+
+  function onTouchMove(e: React.TouchEvent) {
+    if (e.touches.length === 2 && pinchState.current) {
+      e.preventDefault()
+      const { startDistance, startZoom } = pinchState.current
+      setZoom(clampZoom(startZoom * (distance(e.touches[0], e.touches[1]) / startDistance)))
+    } else if (e.touches.length === 1 && dragState.current) {
+      const { startX, startY, panX, panY } = dragState.current
+      const t = e.touches[0]
+      setPan({ x: panX + (t.clientX - startX), y: panY + (t.clientY - startY) })
+    }
+  }
+
+  function onTouchEnd() {
+    dragState.current = null
+    pinchState.current = null
+    setIsInteracting(false)
+  }
+
   useEffect(() => {
     if (!lightbox) return
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') setLightbox(null)
+      else if (e.key === '+' || e.key === '=') zoomBy(1.3)
+      else if (e.key === '-') zoomBy(1 / 1.3)
       else if (e.key === 'ArrowRight') step(1)
       else if (e.key === 'ArrowLeft') step(-1)
     }
@@ -178,7 +274,10 @@ export default function PreviewPackageGallery({
                     <button
                       key={url}
                       type="button"
-                      onClick={() => setLightbox({ sectionIndex: sections.indexOf(s), pageIndex: i })}
+                      onClick={() => {
+                        resetZoom()
+                        setLightbox({ sectionIndex: sections.indexOf(s), pageIndex: i })
+                      }}
                       className="group relative flex-shrink-0 rounded-[var(--radius-sm)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
                       aria-label={`View ${s.label}, page ${i + 1} of ${s.image_urls.length}, enlarged`}
                     >
@@ -221,17 +320,54 @@ export default function PreviewPackageGallery({
                 — page {lightbox.pageIndex + 1} of {activeSection.image_urls.length}
               </span>
             </p>
-            <button
-              type="button"
-              onClick={() => setLightbox(null)}
-              aria-label="Close enlarged preview"
-              className="rounded-full p-1.5 text-white/80 hover:bg-white/10 hover:text-white"
-            >
-              <CloseIcon />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  zoomBy(1 / 1.3)
+                }}
+                disabled={zoom <= MIN_ZOOM}
+                aria-label="Zoom out"
+                className="rounded-full p-1.5 text-white/80 hover:bg-white/10 hover:text-white disabled:opacity-30"
+              >
+                <ZoomIcon direction="out" />
+              </button>
+              <span className="w-11 text-center text-xs tabular-nums text-white/70">{Math.round(zoom * 100)}%</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  zoomBy(1.3)
+                }}
+                disabled={zoom >= MAX_ZOOM}
+                aria-label="Zoom in"
+                className="rounded-full p-1.5 text-white/80 hover:bg-white/10 hover:text-white disabled:opacity-30"
+              >
+                <ZoomIcon direction="in" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setLightbox(null)}
+                aria-label="Close enlarged preview"
+                className="ml-2 rounded-full p-1.5 text-white/80 hover:bg-white/10 hover:text-white"
+              >
+                <CloseIcon />
+              </button>
+            </div>
           </div>
 
-          <div className="relative flex flex-1 items-center justify-center overflow-hidden">
+          <div
+            className="relative flex flex-1 items-center justify-center overflow-hidden"
+            onWheel={onWheel}
+            onMouseDown={onMouseDown}
+            onMouseMove={onMouseMove}
+            onMouseUp={onMouseUp}
+            onMouseLeave={onMouseUp}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+          >
             {(lightbox.sectionIndex > 0 || lightbox.pageIndex > 0) && (
               <button
                 type="button"
@@ -240,7 +376,7 @@ export default function PreviewPackageGallery({
                   step(-1)
                 }}
                 aria-label="Previous page"
-                className="absolute left-0 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 sm:left-2"
+                className="absolute left-0 z-10 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 sm:left-2"
               >
                 <ChevronIcon direction="left" />
               </button>
@@ -251,7 +387,21 @@ export default function PreviewPackageGallery({
               src={activeSection.image_urls[lightbox.pageIndex]}
               alt={`${activeSection.label}, page ${lightbox.pageIndex + 1} of ${activeSection.image_urls.length}, enlarged`}
               className="max-h-full max-w-full rounded-[var(--radius-sm)] object-contain shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
+              style={{
+                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                cursor: zoom > MIN_ZOOM ? 'grab' : 'zoom-in',
+                transition: isInteracting ? 'none' : 'transform 0.15s ease-out',
+              }}
+              draggable={false}
+              onClick={(e) => {
+                e.stopPropagation()
+                if (zoom === MIN_ZOOM) zoomBy(2)
+              }}
+              onDoubleClick={(e) => {
+                e.stopPropagation()
+                setZoom(MIN_ZOOM)
+                setPan({ x: 0, y: 0 })
+              }}
             />
 
             {(lightbox.sectionIndex < sections.length - 1 ||
@@ -263,7 +413,7 @@ export default function PreviewPackageGallery({
                   step(1)
                 }}
                 aria-label="Next page"
-                className="absolute right-0 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 sm:right-2"
+                className="absolute right-0 z-10 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 sm:right-2"
               >
                 <ChevronIcon direction="right" />
               </button>
@@ -336,6 +486,17 @@ function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </svg>
+  )
+}
+
+function ZoomIcon({ direction }: { direction: 'in' | 'out' }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4">
+      <circle cx="8.5" cy="8.5" r="6" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M13.5 13.5L18 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M5.5 8.5h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      {direction === 'in' && <path d="M8.5 5.5v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />}
     </svg>
   )
 }
