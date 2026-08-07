@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import { apiFetch, apiFetchUpload } from '@/lib/api'
+import { formatPhoneInput, isIncompletePhone } from '@/lib/phone'
 import Card from '@/components/ui/Card'
+import Field from '@/components/ui/Field'
 import Input from '@/components/ui/Input'
 import MoneyInput from '@/components/ui/MoneyInput'
 import Button from '@/components/ui/Button'
@@ -76,12 +78,15 @@ export default function PostPaymentDetailsForm({
   const [ownerName, setOwnerName] = useState('')
   const [ownerEmail, setOwnerEmail] = useState('')
   const [ownerPhone, setOwnerPhone] = useState('')
+  const [ownerPhoneTouched, setOwnerPhoneTouched] = useState(false)
   const [mailingStreet, setMailingStreet] = useState('')
   const [mailingCity, setMailingCity] = useState('')
   const [mailingState, setMailingState] = useState('')
   const [mailingZip, setMailingZip] = useState('')
   const [alternatePhone, setAlternatePhone] = useState('')
+  const [alternatePhoneTouched, setAlternatePhoneTouched] = useState(false)
   const [fax, setFax] = useState('')
+  const [faxTouched, setFaxTouched] = useState(false)
   const [writtenFindings, setWrittenFindings] = useState('')
   const [claimForRefund, setClaimForRefund] = useState('')
 
@@ -180,22 +185,43 @@ export default function PostPaymentDetailsForm({
               </div>
             )}
             {needsOwnerPhone && (
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-foreground">Daytime phone</label>
-                <Input type="tel" value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} />
-              </div>
+              <Field
+                label="Daytime phone"
+                error={ownerPhoneTouched && isIncompletePhone(ownerPhone) ? 'Enter a 10-digit phone number' : undefined}
+              >
+                <Input
+                  type="tel"
+                  value={ownerPhone}
+                  onChange={(e) => setOwnerPhone(formatPhoneInput(e.target.value))}
+                  onBlur={() => setOwnerPhoneTouched(true)}
+                />
+              </Field>
             )}
             {needsAlternatePhone && (
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-foreground">Alternate phone</label>
-                <Input type="tel" value={alternatePhone} onChange={(e) => setAlternatePhone(e.target.value)} />
-              </div>
+              <Field
+                label="Alternate phone"
+                error={alternatePhoneTouched && isIncompletePhone(alternatePhone) ? 'Enter a 10-digit phone number' : undefined}
+              >
+                <Input
+                  type="tel"
+                  value={alternatePhone}
+                  onChange={(e) => setAlternatePhone(formatPhoneInput(e.target.value))}
+                  onBlur={() => setAlternatePhoneTouched(true)}
+                />
+              </Field>
             )}
             {needsFax && (
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-foreground">Fax</label>
-                <Input type="tel" value={fax} onChange={(e) => setFax(e.target.value)} />
-              </div>
+              <Field
+                label="Fax"
+                error={faxTouched && isIncompletePhone(fax) ? 'Enter a 10-digit phone number' : undefined}
+              >
+                <Input
+                  type="tel"
+                  value={fax}
+                  onChange={(e) => setFax(formatPhoneInput(e.target.value))}
+                  onBlur={() => setFaxTouched(true)}
+                />
+              </Field>
             )}
           </div>
 

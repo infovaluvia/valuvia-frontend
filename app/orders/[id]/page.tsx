@@ -265,10 +265,10 @@ export default async function OrderPage({
                     >
                       <span>
                         <span className="block text-lg font-semibold text-foreground">
-                          Add property condition
+                          Additional info
                         </span>
                         <span className="mt-0.5 block text-base text-foreground-muted">
-                          Optional — strengthens your case with your own opinion of value and photos
+                          Optional — opinion of value, photos, mailing address, and phone numbers
                         </span>
                       </span>
                       <ArrowRightIcon />

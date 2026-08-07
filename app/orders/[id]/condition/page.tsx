@@ -15,7 +15,19 @@ export default async function OrderConditionPage({
 }) {
   const { id } = await params
   const data = (await apiFetchServer(`/api/v1/orders/${id}`)) as {
-    order: { id: string; requested_value_cents: number | null }
+    order: {
+      id: string
+      requested_value_cents: number | null
+      intake_json: {
+        owner_phone?: string | null
+        mailing_street?: string | null
+        mailing_city?: string | null
+        mailing_state?: string | null
+        mailing_zip?: string | null
+        owner_alternate_phone?: string | null
+        owner_fax?: string | null
+      }
+    }
   }
   const { order } = data
 
@@ -31,15 +43,19 @@ export default async function OrderConditionPage({
             ← Back to your recommendation
           </Link>
           <h1 className="mt-3 text-2xl font-bold text-foreground md:text-3xl">
-            Add Property Condition
+            Additional Info
           </h1>
           <p className="mt-2 text-base text-foreground-muted">
             Optional, but it strengthens your case: your own opinion of value, any condition
-            issues an appraiser should know about, and photos. You can also add or edit this
-            after you purchase.
+            issues an appraiser should know about, photos, and any contact details for your
+            official application. You can also add or edit this after you purchase.
           </p>
 
-          <ConditionIntakeForm orderId={order.id} recommendedValueCents={order.requested_value_cents ?? undefined} />
+          <ConditionIntakeForm
+            orderId={order.id}
+            recommendedValueCents={order.requested_value_cents ?? undefined}
+            intake={order.intake_json}
+          />
         </div>
       </main>
       <Footer />
