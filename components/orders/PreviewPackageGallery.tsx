@@ -112,21 +112,37 @@ export default function PreviewPackageGallery({
             </p>
           </Card>
 
-          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {sections.map((s) => (
-              <div key={s.kind} className="relative overflow-hidden rounded-[var(--radius-sm)] border border-border bg-surface-alt">
-                {/* eslint-disable-next-line @next/next/no-img-element -- signed storage image, not a local/optimizable asset */}
-                <img src={s.image_urls[0]} alt={s.label} className="aspect-[8.5/11] w-full object-cover" />
-                {s.locked && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/45 p-3 text-center">
-                    <LockIcon />
-                    <span className="text-xs font-semibold text-white">Premium Content</span>
-                    <span className="text-[0.7rem] text-white/80">Unlock to continue</span>
-                  </div>
-                )}
-                <p className="border-t border-border bg-surface px-2 py-1.5 text-center text-xs font-medium text-foreground">
-                  {s.label}
-                </p>
+              <div key={s.kind} className="overflow-hidden rounded-[var(--radius-sm)] border border-border bg-surface-alt">
+                <div className="flex items-center justify-between gap-2 border-b border-border bg-surface px-3 py-2">
+                  <p className="text-xs font-medium text-foreground">{s.label}</p>
+                  {s.locked && (
+                    <span className="flex items-center gap-1 rounded-full bg-primary-tint px-2 py-0.5 text-[0.65rem] font-semibold text-primary">
+                      <LockIcon />
+                      Full copy after purchase
+                    </span>
+                  )}
+                </div>
+                {/* The backend already blurs (for locked volumes) and
+                    watermarks every page it sends here -- that's the
+                    actual "can't file this for free" protection.
+                    Covering it with a second, opaque overlay just hides
+                    the real preview the customer is supposed to see, so
+                    it's shown as-is; up to 3 pages per volume, scrollable
+                    on narrow screens, matching MAX_PREVIEW_PAGES on the
+                    backend (app/services/preview_render.py). */}
+                <div className="flex gap-2 overflow-x-auto p-2">
+                  {s.image_urls.map((url, i) => (
+                    // eslint-disable-next-line @next/next/no-img-element -- signed storage image, not a local/optimizable asset
+                    <img
+                      key={url}
+                      src={url}
+                      alt={`${s.label}, page ${i + 1} of ${s.image_urls.length}`}
+                      className="aspect-[8.5/11] w-32 flex-shrink-0 rounded-[var(--radius-sm)] border border-border object-cover sm:w-36"
+                    />
+                  ))}
+                </div>
               </div>
             ))}
           </div>
@@ -163,7 +179,7 @@ function CheckCircleIcon() {
 
 function LockIcon() {
   return (
-    <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 text-white">
+    <svg viewBox="0 0 20 20" fill="none" className="h-3 w-3 flex-shrink-0 text-primary">
       <rect x="4" y="9" width="12" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
       <path d="M6.5 9V6.5a3.5 3.5 0 0 1 7 0V9" stroke="currentColor" strokeWidth="1.5" />
     </svg>
