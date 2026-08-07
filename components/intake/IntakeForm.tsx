@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { track } from '@vercel/analytics'
 import { apiFetch, apiFetchUpload } from '@/lib/api'
 import { loadGooglePlaces, parsePlaceAddressComponents, type ParsedAddress } from '@/lib/google-places'
+import { formatPhoneInput, isIncompletePhone } from '@/lib/phone'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import MoneyInput, { sanitizeMoneyString } from '@/components/ui/MoneyInput'
@@ -73,6 +74,7 @@ export default function IntakeForm({
   const [ownerName, setOwnerName] = useState('')
   const [ownerEmail, setOwnerEmail] = useState('')
   const [ownerPhone, setOwnerPhone] = useState('')
+  const [ownerPhoneTouched, setOwnerPhoneTouched] = useState(false)
   const [occupied, setOccupied] = useState<'yes' | 'no'>('yes')
   // Determines whether the official form's "Single Family Residential"
   // property-type box gets checked — left unset here (rather than
@@ -656,8 +658,16 @@ export default function IntakeForm({
                 <Input type="email" value={ownerEmail} onChange={(e) => setOwnerEmail(e.target.value)} />
               </Field>
 
-              <Field label="Owner phone (optional)">
-                <Input type="tel" value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} />
+              <Field
+                label="Owner phone (optional)"
+                error={ownerPhoneTouched && isIncompletePhone(ownerPhone) ? 'Enter a 10-digit phone number' : undefined}
+              >
+                <Input
+                  type="tel"
+                  value={ownerPhone}
+                  onChange={(e) => setOwnerPhone(formatPhoneInput(e.target.value))}
+                  onBlur={() => setOwnerPhoneTouched(true)}
+                />
               </Field>
 
               <Field label="Do you live in this property? (optional)">

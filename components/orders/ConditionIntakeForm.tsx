@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react'
 import { track } from '@vercel/analytics'
 import { apiFetch, apiFetchUpload } from '@/lib/api'
+import { formatPhoneInput, isIncompletePhone } from '@/lib/phone'
 import Card from '@/components/ui/Card'
+import Field from '@/components/ui/Field'
 import Input from '@/components/ui/Input'
 import MoneyInput from '@/components/ui/MoneyInput'
 import Button from '@/components/ui/Button'
@@ -11,6 +13,16 @@ import Button from '@/components/ui/Button'
 interface ConditionObservation {
   item: string
   observation: string
+}
+
+interface ContactIntake {
+  owner_phone?: string | null
+  mailing_street?: string | null
+  mailing_city?: string | null
+  mailing_state?: string | null
+  mailing_zip?: string | null
+  owner_alternate_phone?: string | null
+  owner_fax?: string | null
 }
 
 // UI Redesign Master Plan §6.4/§6.5: property-condition context and the
@@ -24,9 +36,11 @@ interface ConditionObservation {
 export default function ConditionIntakeForm({
   orderId,
   recommendedValueCents,
+  intake,
 }: {
   orderId: string
   recommendedValueCents?: number
+  intake?: ContactIntake
 }) {
   const [opinionOfValue, setOpinionOfValue] = useState(
     recommendedValueCents ? (recommendedValueCents / 100).toFixed(2) : ''
@@ -36,6 +50,21 @@ export default function ConditionIntakeForm({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+
+  // Real gap found via live testing: mailing address was never
+  // collected anywhere, and alternate phone/fax had no home either --
+  // these go on the official application, but are entirely optional
+  // here (and can still be added post-payment if skipped).
+  const [mailingStreet, setMailingStreet] = useState(intake?.mailing_street ?? '')
+  const [mailingCity, setMailingCity] = useState(intake?.mailing_city ?? '')
+  const [mailingState, setMailingState] = useState(intake?.mailing_state ?? '')
+  const [mailingZip, setMailingZip] = useState(intake?.mailing_zip ?? '')
+  const [ownerPhone, setOwnerPhone] = useState(formatPhoneInput(intake?.owner_phone ?? ''))
+  const [ownerPhoneTouched, setOwnerPhoneTouched] = useState(false)
+  const [alternatePhone, setAlternatePhone] = useState(formatPhoneInput(intake?.owner_alternate_phone ?? ''))
+  const [alternatePhoneTouched, setAlternatePhoneTouched] = useState(false)
+  const [fax, setFax] = useState(formatPhoneInput(intake?.owner_fax ?? ''))
+  const [faxTouched, setFaxTouched] = useState(false)
 
   useEffect(() => {
     track('condition_step_started')
@@ -76,10 +105,20 @@ export default function ConditionIntakeForm({
       const hasOpinion = opinionOfValue.trim() && !Number.isNaN(opinionDollars) && opinionDollars > 0
       const cleanObservations = observations.filter((o) => o.item.trim() || o.observation.trim())
 
-      if (hasOpinion || cleanObservations.length > 0) {
-        const body: Record<string, unknown> = {}
-        if (hasOpinion) body.opinion_of_value_cents = Math.round(opinionDollars * 100)
-        if (cleanObservations.length > 0) body.condition_observations = cleanObservations
+      const body: Record<string, unknown> = {}
+      if (hasOpinion) body.opinion_of_value_cents = Math.round(opinionDollars * 100)
+      if (cleanObservations.length > 0) body.condition_observations = cleanObservations
+      if (mailingStreet.trim()) {
+        body.mailing_street = mailingStreet.trim()
+        if (mailingCity.trim()) body.mailing_city = mailingCity.trim()
+        if (mailingState.trim()) body.mailing_state = mailingState.trim()
+        if (mailingZip.trim()) body.mailing_zip = mailingZip.trim()
+      }
+      if (ownerPhone.trim()) body.owner_phone = ownerPhone.trim()
+      if (alternatePhone.trim()) body.owner_alternate_phone = alternatePhone.trim()
+      if (fax.trim()) body.owner_fax = fax.trim()
+
+      if (Object.keys(body).length > 0) {
         await apiFetch(`/api/v1/orders/${orderId}`, { method: 'PATCH', body: JSON.stringify(body) })
       }
 
@@ -101,13 +140,86 @@ export default function ConditionIntakeForm({
 
   return (
     <Card className="mt-8 p-6 md:p-8">
-      <h2 className="text-lg font-semibold text-foreground">Add property condition (optional)</h2>
+      <h2 className="text-lg font-semibold text-foreground">Additional info (optional)</h2>
       <p className="mt-1 text-sm text-foreground-muted">
         Everything below is optional and strengthens your package once you buy it — you can skip
         this and check out now, or add it here first. You can still change it later.
       </p>
 
       <div className="mt-5">
+        <p className="text-sm font-medium text-foreground">Contact details for your application</p>
+        <p className="mt-1 text-xs text-foreground-muted">
+          Prints on your official appeal application. Leave any of these blank and they&apos;ll
+          just be blank on the form.
+        </p>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <Field
+            label="Daytime phone"
+            error={ownerPhoneTouched && isIncompletePhone(ownerPhone) ? 'Enter a 10-digit phone number' : undefined}
+          >
+            <Input
+              type="tel"
+              value={ownerPhone}
+              onChange={(e) => { setOwnerPhone(formatPhoneInput(e.target.value)); setSaved(false) }}
+              onBlur={() => setOwnerPhoneTouched(true)}
+            />
+          </Field>
+          <Field
+            label="Alternate phone"
+            error={alternatePhoneTouched && isIncompletePhone(alternatePhone) ? 'Enter a 10-digit phone number' : undefined}
+          >
+            <Input
+              type="tel"
+              value={alternatePhone}
+              onChange={(e) => { setAlternatePhone(formatPhoneInput(e.target.value)); setSaved(false) }}
+              onBlur={() => setAlternatePhoneTouched(true)}
+            />
+          </Field>
+          <Field
+            label="Fax"
+            error={faxTouched && isIncompletePhone(fax) ? 'Enter a 10-digit phone number' : undefined}
+          >
+            <Input
+              type="tel"
+              value={fax}
+              onChange={(e) => { setFax(formatPhoneInput(e.target.value)); setSaved(false) }}
+              onBlur={() => setFaxTouched(true)}
+            />
+          </Field>
+        </div>
+
+        <div className="mt-4">
+          <label className="mb-1.5 block text-sm font-medium text-foreground">Mailing address</label>
+          <Input
+            type="text"
+            placeholder="Street address"
+            value={mailingStreet}
+            onChange={(e) => { setMailingStreet(e.target.value); setSaved(false) }}
+          />
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            <Input
+              type="text"
+              placeholder="City"
+              value={mailingCity}
+              onChange={(e) => { setMailingCity(e.target.value); setSaved(false) }}
+            />
+            <Input
+              type="text"
+              placeholder="State"
+              value={mailingState}
+              onChange={(e) => { setMailingState(e.target.value); setSaved(false) }}
+            />
+            <Input
+              type="text"
+              placeholder="ZIP"
+              value={mailingZip}
+              onChange={(e) => { setMailingZip(e.target.value); setSaved(false) }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6">
         <label className="mb-1.5 block text-sm font-medium text-foreground">
           Your opinion of value (optional)
         </label>
