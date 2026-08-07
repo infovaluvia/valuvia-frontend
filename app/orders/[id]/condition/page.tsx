@@ -26,6 +26,8 @@ export default async function OrderConditionPage({
         mailing_zip?: string | null
         owner_alternate_phone?: string | null
         owner_fax?: string | null
+        requests_written_findings?: string | null
+        claim_for_refund?: string | null
       }
     }
   }
