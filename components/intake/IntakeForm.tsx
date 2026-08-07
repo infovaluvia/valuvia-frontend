@@ -104,6 +104,20 @@ export default function IntakeForm({
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
+  // A validation error from a previous submit attempt (e.g. "please
+  // enter your assessed value") otherwise stays on screen even after
+  // the field it complained about is fixed -- error was only ever
+  // cleared at the top of submitOrder(), not when the underlying field
+  // actually changes. Found via live testing: the county-assessor
+  // auto-fill lookup populates assessedValue a moment after a failed
+  // early click, but the old error text kept showing until the next
+  // submit attempt. Called from the two fields submitOrder validates,
+  // not from a useEffect (setState-in-effect is best avoided when a
+  // plain event-handler call does the same thing with one fewer render).
+  function clearError() {
+    setError(null)
+  }
+
   const assessorLookupUrl = county ? COUNTY_ASSESSOR_LINKS[countyToSlug(county)] : undefined
 
   function resetAddress() {
@@ -186,10 +200,18 @@ export default function IntakeForm({
           setPropertyLatLng({ lat: snapshot.latitude, lng: snapshot.longitude })
         }
         if (snapshot.apn && !apn.trim()) setApn(snapshot.apn)
+        // Only source of county/state for an address that didn't come
+        // through Google Places (manual entry, or Places simply
+        // omitting it) -- placed before the assessed_value_cents early
+        // return below so it still applies even when this county
+        // doesn't publish assessment data.
+        if (snapshot.county && !county.trim()) setCounty(snapshot.county)
+        if (snapshot.state && !state.trim()) setState(snapshot.state)
         if (!snapshot.assessed_value_cents) return
         setAssessedValue(sanitizeMoneyString((snapshot.assessed_value_cents / 100).toFixed(2)))
         if (snapshot.property_type) setPropertyType(snapshot.property_type)
         setAssessorLookupApplied(true)
+        clearError()
       })
       .catch(() => {
         // Best-effort convenience layer -- silently fall back to manual
@@ -412,16 +434,41 @@ export default function IntakeForm({
                   className={placesLib && !manualAddressEntry ? '' : 'hidden'}
                 />
                 {(!placesLib || manualAddressEntry) && (
-                  <Input
-                    aria-labelledby={addressLabelId}
-                    type="text"
-                    value={situsAddress}
-                    onChange={(e) => setSitusAddress(e.target.value)}
-                    onBlur={() => situsAddress.trim() && setAddressConfirmed(true)}
-                    placeholder="Type your full address…"
-                    autoComplete="off"
-                    className="h-14 text-lg"
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      aria-labelledby={addressLabelId}
+                      type="text"
+                      value={situsAddress}
+                      onChange={(e) => {
+                        setSitusAddress(e.target.value)
+                        clearError()
+                      }}
+                      onBlur={() => situsAddress.trim() && setAddressConfirmed(true)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && situsAddress.trim()) {
+                          e.preventDefault()
+                          setAddressConfirmed(true)
+                        }
+                      }}
+                      placeholder="Type your full address…"
+                      autoComplete="off"
+                      className="h-14 text-lg"
+                    />
+                    {/* Pasting into the field and tabbing/clicking away
+                        (the onBlur above) already confirms it, but that's
+                        easy to miss -- an explicit button makes the next
+                        step discoverable instead of silently doing
+                        nothing until the field loses focus. */}
+                    <Button
+                      type="button"
+                      size="md"
+                      disabled={!situsAddress.trim()}
+                      onClick={() => setAddressConfirmed(true)}
+                      className="h-14 flex-shrink-0"
+                    >
+                      Use this address
+                    </Button>
+                  </div>
                 )}
                 {placesLib && !manualAddressEntry && (
                   <button
@@ -563,6 +610,7 @@ export default function IntakeForm({
                   onChange={(v) => {
                     setAssessedValue(v)
                     setAssessorLookupApplied(false)
+                    clearError()
                   }}
                 />
                 {assessorLookupLoading && (
