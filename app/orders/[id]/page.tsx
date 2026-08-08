@@ -38,7 +38,6 @@ interface Jurisdiction {
   filing_window_end: string | null
   filing_fee_cents: number
   mailing_address: string | null
-  online_filing_url: string | null
   info_url: string | null
   appeal_board_name: string | null
 }
@@ -376,19 +375,6 @@ function ProcessCard({
               </a>
             ) : (
               'the address in your filing package'
-            )}
-            {jurisdiction.online_filing_url && (
-              <>
-                , or{' '}
-                <a
-                  href={jurisdiction.online_filing_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-primary hover:underline"
-                >
-                  file online
-                </a>
-              </>
             )}
             .
           </li>
