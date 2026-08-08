@@ -152,6 +152,19 @@ export default async function OrderPage({
   // before you buy" step left).
   const inCheckoutFlow = order.status === 'intake' || order.status === 'comps_review'
 
+  // A 'manual_review_required' recommendation covers two genuinely
+  // different situations that were previously shown identically: (1)
+  // real evidence exists but is borderline/needs a human look, and (2)
+  // there simply isn't enough data to say anything at all
+  // (valuation_engine.py's REVIEW_STATUS_INSUFFICIENT_DATA, tagged
+  // evidence_strength="insufficient"). Case (2) should stop here, the
+  // same as 'not_recommended' -- there is no package worth selling
+  // when there's no evidence behind it, not a "closer look, buy now
+  // anyway" situation.
+  const insufficientData =
+    order.recommendation_json?.recommendation === 'manual_review_required' &&
+    order.recommendation_json?.evidence_strength === 'insufficient'
+
   return (
     <>
       <Navbar />
@@ -179,7 +192,7 @@ export default async function OrderPage({
             <>
               <RecommendationCard screening={screening} />
 
-              {inCheckoutFlow && (
+              {inCheckoutFlow && !insufficientData && (
                 <a
                   href="#checkout"
                   className="mt-4 block text-center text-sm font-semibold text-primary hover:underline"
@@ -219,6 +232,14 @@ export default async function OrderPage({
                   economically reasonable for this property, so we&apos;re not able to sell the
                   appeal package for it. If your assessed value or comparable sales change, come
                   back and we&apos;ll re-check.
+                </Card>
+              ) : insufficientData ? (
+                <Card className="mt-8 p-6 text-center text-base text-foreground-muted md:p-8">
+                  There isn&apos;t enough comparable-sales data available for this property to
+                  support an appeal right now, so we&apos;re not able to sell the appeal package
+                  for it. This isn&apos;t the same as &quot;not worth appealing&quot; forever —
+                  data availability can change. If your assessed value or comparable sales change,
+                  come back and we&apos;ll re-check.
                 </Card>
               ) : (
                 <>

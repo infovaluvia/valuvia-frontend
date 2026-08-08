@@ -132,6 +132,25 @@ export default function IntakeForm({
     setPropertyLatLng(null)
     setAssessorLookupApplied(false)
     setManualAddressEntry(false)
+    // Real bug fix: this previously left every auto-filled field
+    // (owner name, property type, APN, county, state, assessed value)
+    // holding the PREVIOUS property's values -- the county-assessor
+    // lookup effect below only ever fills an EMPTY field ("only fill
+    // if !field.trim()"), so once one address had populated them, a
+    // second, different address's lookup could never overwrite them.
+    // Worse, leaving assessedValue non-empty also blocked the lookup
+    // from re-running at all for the new address (its own guard skips
+    // whenever assessedValue is already set). Clearing all of it here
+    // -- the one place a user explicitly says "this isn't the property
+    // I meant" -- lets the next confirmed address genuinely start
+    // fresh and auto-fill whatever it finds.
+    setApn('')
+    setCounty('')
+    setState('')
+    setOwnerName('')
+    setPropertyType('')
+    setAssessedValue('')
+    setOccupied('yes')
   }
 
   // Fired once, the moment this form is actually reached -- the funnel
@@ -217,9 +236,15 @@ export default function IntakeForm({
         // field, so there's nothing to auto-fill it from.
         if (snapshot.owner_name && !ownerName.trim()) setOwnerName(snapshot.owner_name)
         if (snapshot.owner_occupied != null) setOccupied(snapshot.owner_occupied ? 'yes' : 'no')
+        // Real bug fix: property_type used to be set AFTER the
+        // assessed_value_cents early-return below, so a property with
+        // a real, known type but no PUBLISHED assessed value (a real,
+        // documented gap -- not every county publishes assessment
+        // data) silently never got its type filled in at all, purely
+        // as an accident of code ordering, not by design.
+        if (snapshot.property_type) setPropertyType(snapshot.property_type)
         if (!snapshot.assessed_value_cents) return
         setAssessedValue(sanitizeMoneyString((snapshot.assessed_value_cents / 100).toFixed(2)))
-        if (snapshot.property_type) setPropertyType(snapshot.property_type)
         setAssessorLookupApplied(true)
         clearError()
       })
