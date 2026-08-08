@@ -39,6 +39,7 @@ interface Jurisdiction {
   filing_fee_cents: number
   mailing_address: string | null
   online_filing_url: string | null
+  info_url: string | null
   appeal_board_name: string | null
 }
 
@@ -404,6 +405,20 @@ function ProcessCard({
             </li>
           )}
         </ol>
+        {jurisdiction.info_url && (
+          <p className="mt-4 text-sm text-muted-foreground">
+            Read {jurisdiction.name}&apos;s own explanation of this process:{' '}
+            <a
+              href={jurisdiction.info_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-primary hover:underline"
+            >
+              official appeal process page
+            </a>
+            .
+          </p>
+        )}
       </Card>
     </>
   )
